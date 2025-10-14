@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Sinais Aviator</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #111;
+      color: #0f0;
+      margin-top: 50px;
+    }
+    h1 { color: #f00; }
+    ul { list-style: none; padding: 0; }
+    li {
+      font-size: 2em;
+      margin: 10px 0;
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛩️ Últimos Sinais do Aviator</h1>
+  <ul id="sinais"></ul>
+
+  <script>
+    async function carregarSinais() {
+      try {
+        const res = await fetch('/api/sinais-aviator');
+        const sinais = await res.json();
+        const ul = document.getElementById('sinais');
+        ul.innerHTML = '';
+        sinais.forEach(sinal => {
+          const li = document.createElement('li');
+          li.textContent = sinal;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error("Erro ao buscar sinais:", e);
+      }
+    }
+
+    setInterval(carregarSinais, 3000);
+    carregarSinais();
+  </script>
+</body>
+</html>

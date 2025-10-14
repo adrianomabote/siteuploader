@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="pt">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sistema de Cashout</title>
+
+  <meta name="theme-color" content="#0B0F14" />
+  <link rel="manifest" href="/manifest.json?v=4" />
+
+  <link rel="stylesheet" href="/styles.css?v=4" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <script src="/app.js?v=6" defer></script>
+  <script src="/ux.js?v=1" defer></script>
+  
+  <style>
+    * {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
+    
+    input, textarea {
+      -webkit-user-select: text !important;
+      -moz-user-select: text !important;
+      -ms-user-select: text !important;
+      user-select: text !important;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    (function() {
+      'use strict';
+      
+      // Bloquear clique direito
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+      }, false);
+      
+      // Bloquear seleção de texto
+      document.addEventListener('selectstart', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          return false;
+        }
+      }, false);
+      
+      // Bloquear arrastar
+      document.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+      }, false);
+      
+      // Bloquear copiar
+      document.addEventListener('copy', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          return false;
+        }
+      }, false);
+      
+      // Bloquear cortar
+      document.addEventListener('cut', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          return false;
+        }
+      }, false);
+      
+      // Bloquear atalhos de teclado
+      document.addEventListener('keydown', function(e) {
+        // Bloquear F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+Shift+C
+        if (
+          e.keyCode === 123 || // F12
+          (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+          (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+          (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+          (e.ctrlKey && e.keyCode === 83) || // Ctrl+S
+          (e.ctrlKey && e.shiftKey && e.keyCode === 67) || // Ctrl+Shift+C
+          (e.ctrlKey && e.keyCode === 67 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') || // Ctrl+C
+          (e.ctrlKey && e.keyCode === 86 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') || // Ctrl+V
+          (e.ctrlKey && e.keyCode === 88 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') || // Ctrl+X
+          (e.ctrlKey && e.keyCode === 65 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') // Ctrl+A
+        ) {
+          e.preventDefault();
+          return false;
+        }
+      }, false);
+      
+      // Detectar DevTools
+      var devtools = {open: false};
+      var element = new Image();
+      Object.defineProperty(element, 'id', {
+        get: function() {
+          devtools.open = true;
+          window.location.reload();
+        }
+      });
+      
+      setInterval(function() {
+        devtools.open = false;
+        console.log(element);
+        console.clear();
+      }, 1000);
+      
+      // Bloquear print screen
+      document.addEventListener('keyup', function(e) {
+        if (e.key === 'PrintScreen') {
+          navigator.clipboard.writeText('');
+        }
+      });
+      
+      // Detectar se está usando ferramentas de desenvolvedor
+      var threshold = 160;
+      setInterval(function() {
+        if (window.outerWidth - window.innerWidth > threshold || 
+            window.outerHeight - window.innerHeight > threshold) {
+          window.location.reload();
+        }
+      }, 1000);
+      
+    })();
+  </script>
+  <div class="safe-area">
+
+    <header class="appbar">
+      <div class="brand">
+        <img class="logo" src="/icon-192.png" alt="Logo" />
+        <div class="titles">
+          <h1>Sistema Cashout</h1>
+          <span class="subtitle" data-subtitle="connection">Conectando …</span>
+        </div>
+      </div>
+      <button class="chip chip-live" aria-live="polite" data-status="realtime">
+        <span id="onlineCount">• 0 online</span>
+      </button>
+
+    </header>
+
+    <main class="content">
+
+      <div class="card mini">
+        <h3 class="velas-title">
+          <span id="velas-status" class="analisando">
+            <span class="ping"></span>
+            <span>Analisando velas</span>
+            <span class="dots"><i></i><i></i><i></i></span>
+          </span>
+        </h3>
+        <ul id="velas" class="velas"></ul>
+      </div>
+
+      <section class="card highlight">
+        <div class="card-head">
+          <h2>Entrada confirmada</h2>
+          <span class="pill" data-field="placar">Aguarde…</span>
+        </div>
+
+        <div class="entry-grid">
+          <div class="entry-metric">
+            <span class="label">Depois de</span>
+            <span class="value" data-field="apos_de">--</span>
+          </div>
+          <div class="entry-metric">
+            <span class="label">Tirar no:</span>
+            <span class="value" data-field="cashout">--</span>
+          </div>
+          <div class="entry-metric">
+            <span class="label">Tentativas:</span>
+            <span class="value" data-field="max_gales">--</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="https://media1.placard.co.mz/redirect.aspx?pid=3319&bid=1690" target="_blank" class="btn btn-primary" id="openGame" style="text-decoration: none; display: inline-block; text-align: center;">Apostar</a>
+          <button class="btn btn-warn" data-action="ativar-push" id="pushbtn">Ativar Alerta</button>
+        </div>
+
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Histórico</h2>
+          <div class="filters">
+            <button class="chip" data-filter="all" aria-pressed="true">Tudo</button>
+            <button class="chip" data-filter="green">Green</button>
+            <button class="chip" data-filter="loss">Loss</button>
+          </div>
+        </div>
+
+        <ul class="history" data-table="historico">
+        </ul>
+
+        <div class="hint">Puxe para baixo para atualizar</div>
+      </section>
+
+    </main>
+
+<section class="tutorial-wrap" id="tutorial">
+  <div class="cta-push" role="status" aria-live="polite">
+    <div class="cta-icon"></div>
+    <div class="cta-text">
+      <strong>Ative os alertas!</strong>
+      <span>Para receber os sinais mesmo com o app fechado.</span>
+    </div>
+    <button class="btn btn-warn cta-btn" id="cta-ativar-push">Ativar notificações</button>
+  </div>
+</section>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+      <div id="avisoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%); border: 2px solid #22c55e; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; position: relative;">
+          <button onclick="closeAvisoModal()" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1;">×</button>
+          
+          <h2 style="color: #22c55e; text-align: center; font-size: 20px; font-weight: bold; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 1px;">AVISO IMPORTANTE</h2>
+          
+          <p style="color: #d1d5db; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0;">Para utilizar os sinais de forma eficaz, é necessário estar conectado à plataforma de apostas oficial. Caso ainda não possua uma conta, recomendamos o acesso através do botão abaixo para obter as melhores condições de entrada.</p>
+          
+          <div style="display: flex; gap: 12px; justify-content: space-between;">
+            <button onclick="closeAvisoModal()" style="flex: 1; background-color: #4b5563; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#374151'" onmouseout="this.style.backgroundColor='#4b5563'">FECHAR</button>
+            
+            <button onclick="closeAvisoModal(); window.open('https://media1.placard.co.mz/redirect.aspx?pid=3319&bid=1690', '_blank')" style="flex: 1; background-color: #22c55e; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">ACESSAR<br>PLATAFORMA</button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="whatsappModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 28px; max-width: 400px; width: 90%; position: relative;">
+          <button onclick="closeWhatsappModal()" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1;">×</button>
+          
+          <h2 style="color: #22c55e; text-align: center; font-size: 20px; font-weight: 700; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 1px;">GRUPO OFICIAL WHATSAPP</h2>
+          
+          <p style="color: #ffffff; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0; font-weight: 500;">Entre agora no grupo de WhatsApp e tenha acesso a dicas exclusivas, outros bots 100% assertivos e suporte 24/24 para tirar todas as suas dúvidas.</p>
+          
+          <p style="color: #d1d5db; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0;">No grupo você encontra tudo o que precisa para ganhar no Aviator todos os dias com segurança.</p>
+          
+          <button onclick="closeWhatsappModal(); window.open('https://chat.whatsapp.com/D2NlMN4tkkL54m2EhS7o6Y?mode=ems_copy_t', '_blank')" style="width: 100%; background-color: #22c55e; color: #ffffff; border: none; border-radius: 8px; padding: 16px 20px; font-size: 15px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: all 0.2s; letter-spacing: 0.5px;" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">ENTRAR NO GRUPO AGORA</button>
+        </div>
+      </div>
+      
+      <script>
+        var currentModal = 'aviso';
+        var modalTimer = null;
+        
+        function closeAvisoModal() {
+          document.getElementById('avisoModal').style.display = 'none';
+          if (modalTimer) clearTimeout(modalTimer);
+          modalTimer = setTimeout(function() {
+            showWhatsappModal();
+          }, 40000);
+        }
+        
+        function closeWhatsappModal() {
+          document.getElementById('whatsappModal').style.display = 'none';
+          if (modalTimer) clearTimeout(modalTimer);
+          modalTimer = setTimeout(function() {
+            showAvisoModal();
+          }, 180000);
+        }
+        
+        function showAvisoModal() {
+          var modal = document.getElementById('avisoModal');
+          if (modal) {
+            modal.style.display = 'flex';
+          }
+        }
+        
+        function showWhatsappModal() {
+          var modal = document.getElementById('whatsappModal');
+          if (modal) {
+            modal.style.display = 'flex';
+          }
+        }
+        
+        setTimeout(function() {
+          showAvisoModal();
+        }, 10000);
+        
+        function colorirVelas() {
+          const velas = document.querySelectorAll('#velas li');
+          
+          velas.forEach(el => {
+            const texto = el.textContent || el.innerText || '';
+            const match = texto.match(/(\d+\.\d{1,2})x/);
+            
+            if (match) {
+              const valor = parseFloat(match[1]);
+              let corTexto = '#60a5fa';
+              
+              if (valor >= 1.00 && valor < 2.00) {
+                corTexto = '#60a5fa';
+              } else if (valor >= 2.00 && valor < 10.00) {
+                corTexto = '#a855f7';
+              } else if (valor >= 10.00) {
+                corTexto = '#ec4899';
+              }
+              
+              el.style.setProperty('color', corTexto, 'important');
+              el.style.fontWeight = 'bold';
+            }
+          });
+        }
+        
+        setInterval(colorirVelas, 100);
+        
+        const colorObserver = new MutationObserver(colorirVelas);
+        const velasContainer = document.getElementById('velas');
+        if (velasContainer) {
+          colorObserver.observe(velasContainer, { childList: true, subtree: true, characterData: true });
+        }
+        
+        
+      </script>
+      
+      <div style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%) !important; border-top: 2px solid transparent; padding: 12px 20px; text-align: center; z-index: 10000; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.8);">
+        <p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">
+          Sistema desenvolvido por <span style="color: #22c55e; font-weight: 700;">CYBER HACKER OFFICE</span>
+        </p>
+      </div>
+      
+      </body>
+</html>
