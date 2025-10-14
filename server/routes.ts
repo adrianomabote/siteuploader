@@ -292,13 +292,69 @@ function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
   }
 }
 
+// Buscar sinais do site externo
+async function buscarSinaisSite() {
+  try {
+    const response = await fetch('https://app.sscashout.online/');
+    const html = await response.text();
+    
+    // Extrair velas (padrão: "1.11x", "1.19x", etc.)
+    const velasMatch = html.match(/\d+\.\d{2}x/g);
+    
+    if (velasMatch && velasMatch.length > 0) {
+      // Pegar até 5 velas e converter para números
+      const velasNumericas = velasMatch
+        .slice(0, 5)
+        .map(v => parseFloat(v.replace('x', '')))
+        .filter(v => v >= 1.00 && v <= 99.99);
+      
+      if (velasNumericas.length >= 4) {
+        // Pegar só as 4 primeiras
+        const novasVelas = velasNumericas.slice(0, 4);
+        
+        // Verificar se mudaram
+        const velasString = novasVelas.join(',');
+        const velasAntigasString = ultimasVelas.join(',');
+        
+        if (velasString !== velasAntigasString) {
+          const snapshotAnterior = [...ultimasVelas];
+          ultimasVelas = novasVelas;
+          
+          broadcast("velas", { velas: ultimasVelas });
+          console.log(`🌐 Velas do site: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+          
+          // Processar nova vela
+          if (snapshotAnterior.length > 0) {
+            processarNovaVela(snapshotAnterior, novasVelas[0]);
+          }
+        }
+      }
+      
+      if (!servidorSinaisOnline) {
+        servidorSinaisOnline = true;
+        broadcast("servidor_status", { online: true });
+        console.log("✅ Conectado ao site de sinais!");
+      }
+    }
+    
+  } catch (error) {
+    if (servidorSinaisOnline) {
+      servidorSinaisOnline = false;
+      broadcast("servidor_status", { online: false });
+      console.log('⚠️ Site de sinais indisponível');
+    }
+  }
+}
+
 function iniciarSistemaAutomatico() {
-  console.log("⏸️  Sistema de geração automática DESATIVADO pelo usuário");
-  console.log("💡 Use o script de console para capturar velas reais do Aviator");
+  console.log("🌐 Sistema de busca automática ATIVADO");
+  console.log("📡 Buscando sinais de: https://app.sscashout.online/");
   
-  // DESATIVADO: Não buscar velas automaticamente
-  // buscarVelasReais();
-  // setInterval(buscarVelasReais, 2000);
+  // Buscar imediatamente
+  buscarSinaisSite();
+  
+  // Depois buscar a cada 5 segundos
+  setInterval(buscarSinaisSite, 5000);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
