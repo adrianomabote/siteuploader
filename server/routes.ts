@@ -164,10 +164,23 @@ async function buscarVelasReais() {
       }
     }
   } catch (error) {
-    console.error('❌ Erro ao buscar velas:', error);
+    // Usar velas geradas localmente como fallback
     if (servidorSinaisOnline) {
       servidorSinaisOnline = false;
       broadcast("servidor_status", { online: false });
+      console.log('⚠️ API externa indisponível - usando gerador local');
+    }
+    
+    // Gerar nova vela localmente
+    const novaVela = gerarVela();
+    const snapshotAnterior = [...ultimasVelas];
+    ultimasVelas = [novaVela, ...ultimasVelas.slice(0, 3)];
+    
+    broadcast("velas", { velas: ultimasVelas });
+    console.log(`🎲 Velas (local): [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+    
+    if (snapshotAnterior.length > 0) {
+      processarNovaVela(snapshotAnterior, novaVela);
     }
   }
 }
