@@ -18,3 +18,8 @@ author = 48644742
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[deployment]
+build = ["sh", "-c", "npm install; npm run build"]
+run = ["sh", "-c", "npm start"]
+deploymentTarget = "cloudrun"
