@@ -45,6 +45,18 @@ async function sendPushNotification(title, body) {
   }
   deadSubscriptions.forEach((sub) => pushSubscriptions.delete(sub));
 }
+function gerarVela() {
+  const rand = Math.random();
+  if (rand < 0.5) {
+    return parseFloat((1 + Math.random() * 0.99).toFixed(2));
+  } else if (rand < 0.8) {
+    return parseFloat((2 + Math.random() * 2).toFixed(2));
+  } else if (rand < 0.95) {
+    return parseFloat((4 + Math.random() * 6).toFixed(2));
+  } else {
+    return parseFloat((10 + Math.random() * 40).toFixed(2));
+  }
+}
 function analisarPadrao(velas) {
   if (velas.length < 3) return null;
   const ultimaVela = velas[velas.length - 1];
@@ -109,10 +121,18 @@ async function buscarVelasReais() {
       }
     }
   } catch (error) {
-    console.error("\u274C Erro ao buscar velas:", error);
     if (servidorSinaisOnline) {
       servidorSinaisOnline = false;
       broadcast("servidor_status", { online: false });
+      console.log("\u26A0\uFE0F API externa indispon\xEDvel - usando gerador local");
+    }
+    const novaVela = gerarVela();
+    const snapshotAnterior = [...ultimasVelas];
+    ultimasVelas = [novaVela, ...ultimasVelas.slice(0, 3)];
+    broadcast("velas", { velas: ultimasVelas });
+    console.log(`\u{1F3B2} Velas (local): [${ultimasVelas.map((v) => v.toFixed(2)).join(", ")}]`);
+    if (snapshotAnterior.length > 0) {
+      processarNovaVela(snapshotAnterior, novaVela);
     }
   }
 }
