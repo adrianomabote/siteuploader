@@ -293,13 +293,12 @@ function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
 }
 
 function iniciarSistemaAutomatico() {
-  console.log("🤖 Sistema iniciado - buscando velas reais do Aviator...");
+  console.log("⏸️  Sistema de geração automática DESATIVADO pelo usuário");
+  console.log("💡 Use o script de console para capturar velas reais do Aviator");
   
-  // Buscar velas imediatamente
-  buscarVelasReais();
-  
-  // Buscar a cada 2 segundos (análise mais rápida)
-  setInterval(buscarVelasReais, 2000);
+  // DESATIVADO: Não buscar velas automaticamente
+  // buscarVelasReais();
+  // setInterval(buscarVelasReais, 2000);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
