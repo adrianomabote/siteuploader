@@ -503,6 +503,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(ultimasVelas);
   });
 
+  // API: Visualizar velas atuais (GET)
+  app.get("/api/vela", (req, res) => {
+    res.json({ 
+      ok: true, 
+      velas: ultimasVelas.slice(0, 4),
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // API: Enviar nova vela (para teste/bot)
   app.post("/api/vela", express.json(), (req, res) => {
     const { valor, valores } = req.body;
