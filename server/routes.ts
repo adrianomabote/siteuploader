@@ -292,12 +292,72 @@ function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
   }
 }
 
+// Buscar velas da API SSCashout automaticamente
+async function buscarVelasSSCashout() {
+  try {
+    const response = await fetch('https://app.sscashout.online/api/velas', {
+      headers: { 'User-Agent': 'CashOutFlow/1.0' }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data?.ok && Array.isArray(data.valores)) {
+      const velasNumericas = data.valores
+        .map((v: any) => parseFloat(v))
+        .filter((v: number) => !isNaN(v) && v >= 1.00 && v <= 99.99);
+      
+      if (velasNumericas.length >= 4) {
+        // Pegar as 4 primeiras velas
+        const novasVelas = velasNumericas.slice(0, 4);
+        
+        // Verificar se mudaram
+        const velasString = novasVelas.join(',');
+        const velasAntigasString = ultimasVelas.join(',');
+        
+        if (velasString !== velasAntigasString) {
+          const snapshotAnterior = [...ultimasVelas];
+          ultimasVelas = novasVelas;
+          
+          broadcast("velas", { velas: ultimasVelas });
+          console.log(`🌐 Velas SSCashout: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+          
+          // Processar sinal se mudou
+          if (snapshotAnterior.length > 0) {
+            processarNovaVela(snapshotAnterior, novasVelas[0]);
+          }
+        }
+      }
+      
+      if (!servidorSinaisOnline) {
+        servidorSinaisOnline = true;
+        broadcast("servidor_status", { online: true });
+        console.log("✅ Conectado à API SSCashout!");
+      }
+    }
+    
+  } catch (error: any) {
+    if (servidorSinaisOnline) {
+      servidorSinaisOnline = false;
+      broadcast("servidor_status", { online: false });
+      console.log('⚠️ API SSCashout temporariamente indisponível:', error.message);
+    }
+  }
+}
+
 function iniciarSistemaAutomatico() {
-  console.log("📡 Sistema pronto para receber sinais via script de console");
-  console.log("💡 Use /api/vela para enviar velas do site externo");
-  console.log("🌐 Ou use o script SCRIPT-SSCASHOUT-PARA-CONSOLE.js");
+  console.log("🚀 Sistema 100% Automático ATIVADO!");
+  console.log("🌐 Buscando velas de: https://app.sscashout.online/api/velas");
+  console.log("⏱️  Atualização automática a cada 5 segundos");
   
-  // Sistema aguarda receber velas via API POST /api/vela
+  // Buscar imediatamente
+  buscarVelasSSCashout();
+  
+  // Depois buscar a cada 5 segundos
+  setInterval(buscarVelasSSCashout, 5000);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {

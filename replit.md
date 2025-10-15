@@ -12,18 +12,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
-### External Signal Integration (Oct 14)
-- **Browser Console Script Approach** - Site https://app.sscashout.online/ uses dynamic JavaScript rendering
-- **SCRIPT-SSCASHOUT-PARA-CONSOLE.js** - User-executed script that captures velas from DOM and sends to backend via `/api/vela`
-- **Why Console Script**: Server-side fetch cannot access JavaScript-rendered content (only gets empty HTML)
-- **Script Features**:
-  - Automatic DOM scanning for vela patterns (e.g., "1.45x", "2.30x")
-  - 3-second interval with duplicate prevention
-  - Visual feedback in console with emojis (🔴 low, 🟡 medium, 🟢 high)
-  - Commands: `startSSCaptura()` and `stopSSCaptura()`
-  - Automatic POST to backend with array of 4 most recent velas
-- **Backend Processing**: Receives velas via POST /api/vela, updates state, triggers signal analysis
-- **Documentation**: INSTRUCOES-USO.md provides step-by-step user guide
+### External Signal Integration - 100% Automatic (Oct 15)
+- **Public API Discovery** - Found https://app.sscashout.online/api/velas is publicly accessible
+- **Automatic Polling System** - Backend fetches velas every 5 seconds automatically
+- **Zero Manual Intervention** - No console scripts needed, runs 24/7 on server
+- **Smart Filtering**:
+  - Validates velas between 1.00 and 99.99 (filters outliers like 336.83)
+  - Selects first 4 valid velas from API response
+  - Only updates when velas change (prevents duplicate processing)
+- **Integration Flow**: SSCashout API → Backend (5s polling) → SSE broadcast → Frontend real-time update
+- **Fallback Support**: Still accepts manual velas via POST /api/vela for compatibility
+- **Documentation**: SISTEMA-AUTOMATICO.md explains automatic system architecture
 
 ### Critical Implementation Details
 
