@@ -335,72 +335,56 @@ function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
   }
 }
 
-// Buscar velas da API SSCashout automaticamente
-async function buscarVelasSSCashout() {
-  try {
-    const response = await fetch('https://app.sscashout.online/api/velas', {
-      headers: { 'User-Agent': 'CashOutFlow/1.0' }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    if (data?.ok && Array.isArray(data.valores)) {
-      const velasNumericas = data.valores
-        .map((v: any) => parseFloat(v))
-        .filter((v: number) => !isNaN(v) && v >= 1.00 && v <= 99.99);
-      
-      if (velasNumericas.length >= 4) {
-        // Pegar as 4 primeiras velas
-        const novasVelas = velasNumericas.slice(0, 4);
-        
-        // Verificar se mudaram
-        const velasString = novasVelas.join(',');
-        const velasAntigasString = ultimasVelas.join(',');
-        
-        if (velasString !== velasAntigasString) {
-          const snapshotAnterior = [...ultimasVelas];
-          ultimasVelas = novasVelas;
-          
-          broadcast("velas", { velas: ultimasVelas });
-          console.log(`🌐 Velas SSCashout: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-          
-          // Processar sinal se mudou
-          if (snapshotAnterior.length > 0) {
-            processarNovaVela(snapshotAnterior, novasVelas[0]);
-          }
-        }
-      }
-      
-      if (!servidorSinaisOnline) {
-        servidorSinaisOnline = true;
-        broadcast("servidor_status", { online: true });
-        console.log("✅ Conectado à API SSCashout!");
-      }
-    }
-    
-  } catch (error: any) {
-    if (servidorSinaisOnline) {
-      servidorSinaisOnline = false;
-      broadcast("servidor_status", { online: false });
-      console.log('⚠️ API SSCashout temporariamente indisponível:', error.message);
-    }
+// Sistema próprio de geração de velas
+let modoGeracaoAutomatica = true;
+let ultimaAtualizacaoManual = 0;
+
+function gerarNovaVela(): number {
+  const rand = Math.random();
+  
+  if (rand < 0.50) {
+    return parseFloat((1.00 + Math.random() * 0.99).toFixed(2));
+  } else if (rand < 0.80) {
+    return parseFloat((2.00 + Math.random() * 2.00).toFixed(2));
+  } else if (rand < 0.95) {
+    return parseFloat((4.00 + Math.random() * 6.00).toFixed(2));
+  } else {
+    return parseFloat((10.00 + Math.random() * 40.00).toFixed(2));
+  }
+}
+
+function gerarVelasAutomaticas() {
+  // Se recebeu velas manuais há menos de 30 segundos, não gerar
+  if (Date.now() - ultimaAtualizacaoManual < 30000) {
+    return;
+  }
+  
+  const novaVela = gerarNovaVela();
+  const snapshotAnterior = [...ultimasVelas];
+  
+  ultimasVelas = [novaVela, ...ultimasVelas.slice(0, 3)];
+  
+  broadcast("velas", { velas: ultimasVelas });
+  console.log(`🎲 Vela gerada: ${novaVela.toFixed(2)}x | [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+  
+  if (snapshotAnterior.length > 0) {
+    processarNovaVela(snapshotAnterior, novaVela);
   }
 }
 
 function iniciarSistemaAutomatico() {
-  console.log("🚀 Sistema 100% Automático ATIVADO!");
-  console.log("🌐 Buscando velas de: https://app.sscashout.online/api/velas");
-  console.log("⚡ Atualização ULTRA-RÁPIDA a cada 1 segundo");
+  console.log("🚀 Sistema Próprio de Velas ATIVADO!");
+  console.log("🎲 Modo: Geração automática + Recebimento manual");
+  console.log("⚡ Atualização automática a cada 8 segundos");
+  console.log("📡 API disponível: POST /api/vela (enviar velas manualmente)");
   
-  // Buscar imediatamente
-  buscarVelasSSCashout();
+  if (!servidorSinaisOnline) {
+    servidorSinaisOnline = true;
+    broadcast("servidor_status", { online: true });
+  }
   
-  // Depois buscar a cada 1 segundo
-  setInterval(buscarVelasSSCashout, 1000);
+  // Gerar velas automaticamente a cada 8 segundos
+  setInterval(gerarVelasAutomaticas, 8000);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -512,17 +496,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // API: Enviar nova vela (para teste/bot)
+  // API: Enviar nova vela (para teste/bot/console)
   app.post("/api/vela", express.json(), (req, res) => {
     const { valor, valores } = req.body;
     
+    // Atualizar timestamp da última atualização manual
+    ultimaAtualizacaoManual = Date.now();
+    
     if (valores && Array.isArray(valores)) {
-      ultimasVelas = valores.slice(0, 5);
-      broadcast("velas", { velas: ultimasVelas });
+      const velasValidas = valores
+        .map((v: any) => parseFloat(v))
+        .filter((v: number) => !isNaN(v) && v >= 1.00 && v <= 99.99)
+        .slice(0, 4);
+      
+      if (velasValidas.length >= 4) {
+        const snapshotAnterior = [...ultimasVelas];
+        ultimasVelas = velasValidas;
+        
+        broadcast("velas", { velas: ultimasVelas });
+        console.log(`📥 Velas recebidas: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+        
+        if (snapshotAnterior.length > 0 && snapshotAnterior[0] !== ultimasVelas[0]) {
+          processarNovaVela(snapshotAnterior, ultimasVelas[0]);
+        }
+      }
     } else if (valor !== undefined && valor !== null) {
-      ultimasVelas.unshift(Number(valor));
-      ultimasVelas = ultimasVelas.slice(0, 5);
-      broadcast("vela", { vela: Number(valor) });
+      const velaNum = parseFloat(valor);
+      if (!isNaN(velaNum) && velaNum >= 1.00 && velaNum <= 99.99) {
+        const snapshotAnterior = [...ultimasVelas];
+        ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
+        
+        broadcast("velas", { velas: ultimasVelas });
+        console.log(`📥 Vela recebida: ${velaNum.toFixed(2)}x`);
+        
+        if (snapshotAnterior.length > 0) {
+          processarNovaVela(snapshotAnterior, velaNum);
+        }
+      }
     }
     
     res.json({ ok: true, velas: ultimasVelas });
