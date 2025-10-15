@@ -91,12 +91,12 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
     return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
   }
 
-  // 🔵 PADRÃO 2: PREVISÃO DE 4.00x - Alta volatilidade com velas médias
+  // 🔵 PADRÃO 2: PREVISÃO DE 3.00x - Alta volatilidade com velas médias
   const velasMedioAltas = velas.filter(v => v >= 2.5 && v < 6.0).length;
   if ((maxima - minima) > 3.0 && velasMedioAltas >= 2 && media >= 2.5 && media < 5.0) {
-    console.log("🎯 PADRÃO 2: Volatilidade favorável - Sinal 4.00x");
+    console.log("🎯 PADRÃO 2: Volatilidade favorável - Sinal 3.00x");
     console.log(`   Diferença: ${(maxima - minima).toFixed(2)} | Média: ${media.toFixed(2)}x`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 4.00, max_gales: 1 };
+    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
   }
 
   // 🔴 PADRÃO 3: PREVISÃO DE 2.00x - 3+ velas baixas (recuperação esperada)
@@ -113,12 +113,12 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
     return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
   }
 
-  // 🟢 PADRÃO 5: PREVISÃO DE 4.00x - Sequência crescente média/alta
+  // 🟢 PADRÃO 5: PREVISÃO DE 3.00x - Sequência crescente média/alta
   const crescente = v4 < v3 && v3 < v2 && v2 < v1;
   if (crescente && media >= 2.5 && media < 5.0 && baixas === 0) {
-    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 4.00x");
+    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 3.00x");
     console.log(`   Crescente | Média: ${media.toFixed(2)}x | Sem baixas`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 4.00, max_gales: 1 };
+    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
   }
 
   // 🟠 PADRÃO 6: PREVISÃO DE 2.00x - Recuperação após período baixo
