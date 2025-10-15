@@ -1,0 +1,29 @@
+padroes = [
+  // 🔵 Padrões de 1x–3x (baixos e médios)
+  { nome: "Zigzag Curto", condicao: [1.2, 2.1, 1.3], previsao: "Possível rodada 2x–3x" },
+  { nome: "Escada Crescente", condicao: [1.1, 1.4, 1.9], previsao: "Pode atingir 2x–3x" },
+  { nome: "Pós-Queda Brusca", condicao: [0.9, 1.05, 1.2], previsao: "Chance de 2x–3x" },
+  { nome: "Dois Baixos Seguidos", condicao: [1.3, 1.4], previsao: "Pode vir 2x–3x" },
+  { nome: "Alternância Leve", condicao: [1.5, 2.1, 1.6, 2.5], previsao: "Tendência de 2x–3x" },
+  { nome: "Subida Lenta", condicao: [1.1, 1.3, 1.6, 2.0], previsao: "Pode alcançar 2.5x" },
+  { nome: "Repique Médio", condicao: [1.9, 1.2, 2.8], previsao: "Chance de 2x–3x novamente" },
+  { nome: "Pequena Escada", condicao: [1.1, 1.3, 1.5, 1.7, 2.0], previsao: "Atinge 2x–3x" },
+  { nome: "Curva Alternada", condicao: [1.3, 2.3, 1.2, 2.8], previsao: "Pode estabilizar em 2x" },
+  { nome: "Retorno Rápido", condicao: [1.1, 2.5, 1.3], previsao: "Tende a 2x–3x" },
+
+  // 🟣 Padrões de 4x–6x (médios altos)
+  { nome: "Pré-Pico Médio", condicao: [1.3, 1.4, 1.6, 3.2], previsao: "Pode chegar a 6x" },
+  { nome: "Ciclo Médio", condicao: [2.0, 1.8, 2.5, 1.4], previsao: "Chance de 5x–6x" },
+  { nome: "Após Três Médios", condicao: [2.0, 2.3, 2.1], previsao: "Pode vir 6x" },
+  { nome: "Sequência Estável", condicao: [1.8, 1.9, 2.1, 2.5], previsao: "Possível 5x–6x" },
+  { nome: "Repetição Média", condicao: [2.2, 1.5, 2.0, 1.4], previsao: "Pode vir 6x" },
+  { nome: "Compensação Média", condicao: [1.3, 1.4, 1.5, 1.7, 1.2], previsao: "Chance de 5x–6x" },
+
+  // 💗 Padrões de 7x–10x (altos)
+  { nome: "Sequência Fria", condicao: [1.2, 1.4, 1.05, 1.7, 1.3], previsao: "Possível 6x–10x" },
+  { nome: "Pico Duplo", condicao: [8.9, 1.3], previsao: "Próximo pode repetir pico 6x–10x" },
+  { nome: "Intervalado", condicao: [1.3, 1.5, 10.2, 1.1, 1.2], previsao: "Chance de novo pico alto" },
+  { nome: "Frio Longo", condicao: [1.1, 1.3, 1.2, 1.4, 1.5, 1.3], previsao: "Pode vir 6x–9x" },
+  { nome: "Aquecimento Alto", condicao: [1.5, 2.0, 2.8, 1.9], previsao: "Pode chegar a 8x–10x" },
+  { nome: "Dois Altos Repetidos", condicao: [6.1, 1.2, 7.8], previsao: "Chance de 10x logo" },
+  { nome: "Escada Quente", condicao: [1.2, 1.8, 2.5, 3.9, 5.5], previsao: "Pode atingir 10x" },
