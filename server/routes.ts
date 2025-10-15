@@ -80,9 +80,15 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
     }
   }
 
-  // 🟣 PADRÃO 1: VELA ROSA (>10.0x) - OPORTUNIDADE RARA
-  if (altas >= 1) {
-    console.log("🎯 PADRÃO 1: Vela ROSA detectada - Sinal 10.00x");
+  // 🟣 PADRÃO 1: PREVISÃO DE VELA ROSA (≥10.0x) - Analisa condições favoráveis
+  // Condições: 3+ velas entre 2.5x-8.0x + volatilidade crescente + sem baixas
+  const velasMedioAltas = velas.filter(v => v >= 2.5 && v < 10.0).length;
+  const crescenteProgresso = v4 < v3 && v3 < v2 && v2 < v1; // Progressão ascendente
+  const semBaixas = baixas === 0;
+  
+  if (velasMedioAltas >= 3 && crescenteProgresso && semBaixas && media >= 3.5) {
+    console.log("🎯 PADRÃO 1: CONDIÇÕES para vela ROSA - Sinal 10.00x");
+    console.log(`   Análise: ${velasMedioAltas} velas médio-altas | Crescente: ${crescenteProgresso} | Média: ${media.toFixed(2)}`);
     return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
   }
 
