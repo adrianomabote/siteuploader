@@ -12,12 +12,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
-### False Candle Filter - ELIMINATED (Oct 15)
-- **Problem Solved**: Fake candles (pink/rosa 99.99x, 336.83x, etc.) no longer appear
-- **Strict Filter**: Only accepts realistic Aviator candles (1.00x - 50.00x)
-- **Double Validation**: Applied to both POST /api/vela and POST /api/sinais endpoints
-- **Auto-Rejection**: Invalid values (NaN, undefined, outliers) automatically rejected with server logs
-- **Documentation**: FILTRO-VELAS-FALSAS.md explains the filtering system
+### Intelligent Candle Filter - ACTIVE (Oct 15)
+- **Problem Solved**: Invalid/corrupted candles (NaN, undefined, < 1.00x) are blocked
+- **Smart Filter**: Accepts ALL real Aviator candles (>= 1.00x) with NO upper limit
+- **Shows Everything**: 1x, 10x, 100x, 500x, 1000x - any real candle appears
+- **Triple Validation**: Applied to POST /api/vela, POST /api/sinais, and GET /api/velas endpoints
+- **Auto-Rejection**: Only invalid values (NaN, undefined, < 1.00x) are rejected with server logs
+- **Documentation**: FILTRO-VELAS-FALSAS.md explains the intelligent filtering system
 
 ### External Signal Integration - 100% Automatic (Oct 15)
 - **Public API Discovery** - Found https://app.sscashout.online/api/velas is publicly accessible

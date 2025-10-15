@@ -1,25 +1,31 @@
-# 🛡️ FILTRO DE VELAS FALSAS - ELIMINADO!
+# 🛡️ FILTRO INTELIGENTE DE VELAS - ATIVO!
 
 ## ❌ PROBLEMA RESOLVIDO
 
 Antes, quando você colava o código no console do Aviator, às vezes apareciam **velas falsas** no site, incluindo:
-- 🌸 Velas rosas irreais (99.99x, 336.83x, etc.)
 - ❓ Valores inválidos (NaN, undefined, etc.)
-- 🔢 Números fora do range do Aviator
+- 🔢 Números impossíveis (< 1.00x)
+- ⚠️ Dados corrompidos
 
 ---
 
 ## ✅ SOLUÇÃO IMPLEMENTADA
 
-### **FILTRO RIGOROSO ATIVO**
+### **FILTRO INTELIGENTE ATIVO**
 
-O sistema agora aceita **APENAS velas realistas do Aviator**:
+O sistema agora mostra **TODAS as velas REAIS do Aviator**, bloqueando apenas valores inválidos:
 
 ```
-✅ ACEITO: 1.00x até 50.00x
-❌ REJEITADO: < 1.00x ou > 50.00x
-❌ REJEITADO: NaN, undefined, null
-❌ REJEITADO: Valores inválidos
+✅ ACEITO: Qualquer vela >= 1.00x
+   • 1.00x, 2.00x, 10.00x
+   • 50.00x, 100.00x, 200.00x
+   • 500.00x, 1000.00x...
+   • SEM LIMITE SUPERIOR!
+
+❌ REJEITADO: Apenas valores INVÁLIDOS
+   • Velas < 1.00x (impossível no Aviator)
+   • NaN, undefined, null
+   • Valores não-numéricos
 ```
 
 ---
@@ -56,41 +62,50 @@ if (!isNaN(num) && num >= 1.00 && num <= 50.00) {
 
 ## 📊 EXEMPLOS PRÁTICOS
 
-### **Exemplo 1: Velas Rosas Falsas** ❌
+### **Exemplo 1: Velas ALTAS Reais** ✅
 ```
-Recebido: [1.20, 3.50, 99.99, 2.10]
+Recebido: [1.20, 99.99, 200.50, 500.00]
          
-✅ Aceitas: [1.20, 3.50, 2.10]
-❌ Rejeitada: 99.99x (muito alta!)
+✅ Aceitas: TODAS! [1.20, 99.99, 200.50, 500.00]
+❌ Rejeitadas: NENHUMA
 
-Resultado no site: [1.20, 3.50, 2.10]
+Resultado no site: [1.20, 99.99, 200.50, 500.00]
 ```
 
-### **Exemplo 2: Valores Inválidos** ❌
+### **Exemplo 2: Vela MUITO ALTA Real** ✅
+```
+Recebido: 1000.00x
+         
+✅ Aceita: SIM! (é >= 1.00x)
+
+Resultado no site: [1000.00, 1.20, 99.99, 200.50]
+```
+
+### **Exemplo 3: Valores Inválidos** ❌
 ```
 Recebido: [1.45, NaN, 2.30, undefined]
          
 ✅ Aceitas: [1.45, 2.30]
-❌ Rejeitadas: NaN, undefined
+❌ Rejeitadas: NaN, undefined (inválidos)
 
 Resultado no site: [1.45, 2.30]
 ```
 
-### **Exemplo 3: Outliers Extremos** ❌
+### **Exemplo 4: Vela Impossível** ❌
 ```
-Recebido: [336.83, 1.10, 2.50, 150.00]
+Recebido: 0.50x
          
-✅ Aceitas: [1.10, 2.50]
-❌ Rejeitadas: 336.83x, 150.00x (muito altas!)
+✅ Aceitas: NENHUMA
+❌ Rejeitada: 0.50x (< 1.00x - impossível no Aviator)
 
-Resultado no site: [1.10, 2.50]
+Resultado no site: (velas antigas mantidas)
 ```
 
-### **Exemplo 4: Velas Normais** ✅
+### **Exemplo 5: Velas Normais** ✅
 ```
 Recebido: [1.20, 2.50, 3.80, 1.45]
          
-✅ TODAS aceitas! (dentro do range)
+✅ TODAS aceitas!
 
 Resultado no site: [1.20, 2.50, 3.80, 1.45]
 ```

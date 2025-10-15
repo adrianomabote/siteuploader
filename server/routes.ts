@@ -156,8 +156,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         num = Number(valor);
       }
       
-      // ✅ FILTRO RIGOROSO: Apenas velas realistas do Aviator
-      if (!isNaN(num) && num >= 1.00 && num <= 50.00) {
+      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
+      if (!isNaN(num) && num >= 1.00) {
         velasProcessadas.push(num);
       } else {
         velasRejeitadas.push(num);
@@ -165,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     if (velasRejeitadas.length > 0) {
-      console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN' : v.toFixed(2)).join(', ')}]`);
+      console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}]`);
     }
     
     if (velasProcessadas.length > 0) {
@@ -206,8 +207,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const velasRejeitadas: number[] = [];
       
       for (const v of velasProcessadas) {
-        // ✅ FILTRO RIGOROSO: Apenas velas realistas do Aviator
-        if (!isNaN(v) && v >= 1.00 && v <= 50.00) {
+        // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+        // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
+        if (!isNaN(v) && v >= 1.00) {
           velasValidas.push(v);
         } else {
           velasRejeitadas.push(v);
@@ -215,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (velasRejeitadas.length > 0) {
-        console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN' : v.toFixed(2)).join(', ')}]`);
+        console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}]`);
       }
       
       if (velasValidas.length >= 4) {
@@ -227,14 +229,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else if (valor !== undefined && valor !== null) {
       const velaNum = parseFloat(valor);
       
-      // ✅ FILTRO RIGOROSO: Apenas velas realistas do Aviator
-      if (!isNaN(velaNum) && velaNum >= 1.00 && velaNum <= 50.00) {
+      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
+      if (!isNaN(velaNum) && velaNum >= 1.00) {
         ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
         
         broadcast("velas", { velas: ultimasVelas });
         console.log(`✅ Vela REAL Aviator: ${velaNum.toFixed(2)}x`);
       } else {
-        console.log(`❌ Vela FALSA rejeitada: ${isNaN(velaNum) ? 'NaN' : velaNum.toFixed(2)}x`);
+        console.log(`❌ Vela FALSA rejeitada: ${isNaN(velaNum) ? 'NaN/inválido' : velaNum.toFixed(2)}x (< 1.00)`);
       }
     }
     
