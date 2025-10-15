@@ -10,6 +10,8 @@ let ultimoSinal: any = null;
 let ultimoResultado: any = null;
 let servidorSinaisOnline = false;
 let sinalAtivo: any = null;
+let aguardandoValidacao: boolean = false;
+let velaDoSinal: number | null = null;
 
 // Armazenar assinaturas push
 const pushSubscriptions = new Set<any>();
@@ -34,10 +36,10 @@ function broadcast(event: string, data: any) {
 // Enviar notificação push para todos os inscritos
 async function sendPushNotification(title: string, body: string) {
   const payload = JSON.stringify({ title, body });
-  
+
   const deadSubscriptions: any[] = [];
   const subscriptionsArray = Array.from(pushSubscriptions);
-  
+
   for (const subscription of subscriptionsArray) {
     try {
       await webpush.sendNotification(subscription, payload);
@@ -50,7 +52,7 @@ async function sendPushNotification(title: string, body: string) {
       }
     }
   }
-  
+
   // Remover inscrições inválidas
   deadSubscriptions.forEach(sub => pushSubscriptions.delete(sub));
 }
@@ -60,14 +62,14 @@ async function sendPushNotification(title: string, body: string) {
 // ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - MODO ASSERTIVO
 function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
   if (velas.length < 4) return null;
-  
+
   const [v1, v2, v3, v4] = velas.slice(0, 4);
   const media = (v1 + v2 + v3 + v4) / 4;
   const maxima = Math.max(...velas);
   const minima = Math.min(...velas);
   const baixas = velas.filter(v => v < 2.0).length;
   const altas = velas.filter(v => v >= 10.0).length;
-  
+
   // ⛔ BLOQUEIO: 5+ velas baixas consecutivas (proteção)
   if (velas.length >= 5) {
     const ultimas5 = velas.slice(0, 5);
@@ -77,48 +79,80 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
       return null;
     }
   }
-  
+
   // 🟣 PADRÃO 1: VELA ROSA (>10.0x) - OPORTUNIDADE RARA
   if (altas >= 1) {
     console.log("🎯 PADRÃO 1: Vela ROSA detectada - Sinal 10.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
   }
-  
+
   // 🔵 PADRÃO 2: ALTA VOLATILIDADE - Diferença > 5.0x
   if ((maxima - minima) > 5.0 && baixas <= 1) {
     console.log("🎯 PADRÃO 2: Alta volatilidade detectada - Sinal 6.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 6.00, max_gales: 1 };
   }
-  
+
   // 🔴 PADRÃO 3: 3+ VELAS BAIXAS - Forte indicador
   if (baixas >= 3 && media < 2.0) {
     console.log("🎯 PADRÃO 3: 3+ velas baixas - Sinal 3.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
   }
-  
+
   // 🟡 PADRÃO 4: MÉDIA BAIXA COM 2+ BAIXAS
   if (media < 2.5 && baixas >= 2) {
     console.log("🎯 PADRÃO 4: Média baixa com 2+ baixas - Sinal 2.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
   }
-  
+
   // 🟢 PADRÃO 5: SEQUÊNCIA CRESCENTE - Tendência positiva
   const crescente = v4 < v3 && v3 < v2 && v2 < v1;
   if (crescente && media > 2.0 && media < 5.0) {
     console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 3.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
   }
-  
+
   // 🟠 PADRÃO 6: RECUPERAÇÃO APÓS BAIXA - Última vela > 2.5x e anteriores baixas
   if (v1 >= 2.5 && v1 < 5.0 && baixas >= 2) {
     console.log("🎯 PADRÃO 6: Recuperação detectada - Sinal 2.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
   }
-  
+
   // ⚪ Nenhum padrão favorável detectado
   console.log("⚪ Nenhum padrão favorável - aguardando oportunidade");
   return null;
 }
+
+// 🎯 VALIDAÇÃO AUTOMÁTICA: Verifica próxima vela
+function validarComProximaVela(proximaVela: number) {
+  if (!ultimoSinal || !aguardandoValidacao) return;
+
+  const cashoutAlvo = ultimoSinal.cashout;
+  const status = proximaVela >= cashoutAlvo ? "green" : "loss";
+
+  ultimoResultado = {
+    status,
+    vela_final: proximaVela,
+    id: ultimoSinal.id,
+    ts: new Date().toISOString(),
+    apos_de: ultimoSinal.apos_de,
+    cashout: cashoutAlvo
+  };
+
+  aguardandoValidacao = false;
+  velaDoSinal = null;
+
+  broadcast("resultado", ultimoResultado);
+
+  const emoji = status === "green" ? "✅" : "❌";
+  console.log(`${emoji} RESULTADO: ${status.toUpperCase()} - Vela: ${proximaVela.toFixed(2)}x (Alvo: ${cashoutAlvo.toFixed(2)}x)`);
+
+  // 📱 Notificar resultado
+  sendPushNotification(
+    `${emoji} RESULTADO: ${status.toUpperCase()}`,
+    `Vela: ${proximaVela.toFixed(2)}x | Alvo: ${cashoutAlvo.toFixed(2)}x`
+  );
+}
+
 
 // Sistema de recebimento de velas do Aviator (via script console)
 function iniciarSistemaAviator() {
@@ -127,7 +161,7 @@ function iniciarSistemaAviator() {
   console.log("⚡ Atualização: A cada nova vela recebida");
   console.log("📍 Endpoint: POST /api/vela");
   console.log("🤖 Análise automática de padrões: ATIVADA");
-  
+
   if (!servidorSinaisOnline) {
     servidorSinaisOnline = true;
     broadcast("servidor_status", { online: true });
@@ -135,7 +169,7 @@ function iniciarSistemaAviator() {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+
   // Servir arquivos estáticos da pasta public
   app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -155,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Enviar contagem inicial
     res.write(`data: ${JSON.stringify({ event: "online", data: { count: connectedClients.size } })}\n\n`);
-    
+
     // Broadcast para todos sobre novo usuário online
     broadcast("online", { count: connectedClients.size });
 
@@ -191,32 +225,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       status, 
       vela_final, 
       id: id || Date.now().toString(),
-      ts: new Date().toISOString() 
+      ts: new Date().toISOString(),
+      apos_de: ultimoSinal?.apos_de,
+      cashout: ultimoSinal?.cashout
     };
+    aguardandoValidacao = false;
+    velaDoSinal = null;
     broadcast("resultado", ultimoResultado);
+
+    const emoji = status === "green" ? "✅" : "❌";
+    console.log(`${emoji} RESULTADO MANUAL: ${status.toUpperCase()}`);
+
     res.json({ ok: true });
   });
 
   // API: Receber sinais do Aviator (enviado pelo código no console)
   app.post("/api/sinais", express.json(), (req, res) => {
     const { rodadas } = req.body;
-    
+
     if (!Array.isArray(rodadas)) {
       return res.status(400).json({ ok: false, error: "Formato inválido" });
     }
-    
+
     const velasProcessadas: number[] = [];
     const velasRejeitadas: number[] = [];
-    
+
     for (const valor of rodadas) {
       let num: number;
-      
+
       if (typeof valor === 'string') {
         num = parseFloat(valor.replace('x', ''));
       } else {
         num = Number(valor);
       }
-      
+
       // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
       // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
       if (!isNaN(num) && num >= 1.00) {
@@ -225,22 +267,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         velasRejeitadas.push(num);
       }
     }
-    
+
     if (velasRejeitadas.length > 0) {
       console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}]`);
     }
-    
+
     if (velasProcessadas.length > 0) {
       ultimasVelas = velasProcessadas.slice(0, 5);
       broadcast("velas", { velas: ultimasVelas });
       console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-      
+
       if (!servidorSinaisOnline) {
         servidorSinaisOnline = true;
         broadcast("servidor_status", { online: true });
       }
     }
-    
+
     res.json({ ok: true });
   });
 
@@ -261,12 +303,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API: Receber velas do script Aviator
   app.post("/api/vela", express.json(), (req, res) => {
     const { valor, valores } = req.body;
-    
+
     if (valores && Array.isArray(valores)) {
       const velasProcessadas = valores.map((v: any) => parseFloat(v));
       const velasValidas: number[] = [];
       const velasRejeitadas: number[] = [];
-      
+
       for (const v of velasProcessadas) {
         // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
         // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
@@ -276,76 +318,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
           velasRejeitadas.push(v);
         }
       }
-      
+
       if (velasRejeitadas.length > 0) {
-        console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}]`);
+        console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}`);
       }
-      
+
       if (velasValidas.length >= 4) {
         ultimasVelas = velasValidas.slice(0, 4);
-        
+
         broadcast("velas", { velas: ultimasVelas });
         console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-        
-        // 🤖 ANÁLISE AUTOMÁTICA DE PADRÕES
-        const analise = analisarPadrao(ultimasVelas);
-        if (analise && analise.deve_sinalizar) {
-          ultimoSinal = {
-            apos_de: analise.apos_de,
-            cashout: analise.cashout,
-            max_gales: analise.max_gales,
-            ts: new Date().toISOString()
-          };
-          
-          broadcast("sinal", ultimoSinal);
-          
-          // 📱 Enviar notificação push
-          sendPushNotification(
-            "🎯 NOVA ENTRADA!",
-            `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
-          );
-          
-          console.log(`🚀 SINAL GERADO: ${analise.apos_de.toFixed(2)}x → ${analise.cashout.toFixed(2)}x (${analise.max_gales} gales)`);
+
+        const velaAtual = ultimasVelas[0];
+
+        // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
+        if (aguardandoValidacao && velaDoSinal !== null && velaAtual !== velaDoSinal) {
+          validarComProximaVela(velaAtual);
         }
-      }
-    } else if (valor !== undefined && valor !== null) {
-      const velaNum = parseFloat(valor);
-      
-      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
-      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
-      if (!isNaN(velaNum) && velaNum >= 1.00) {
-        ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
-        
-        broadcast("velas", { velas: ultimasVelas });
-        console.log(`✅ Vela REAL Aviator: ${velaNum.toFixed(2)}x`);
-        
-        // 🤖 ANÁLISE AUTOMÁTICA DE PADRÕES
-        if (ultimasVelas.length >= 4) {
+
+        // 🤖 ANÁLISE AUTOMÁTICA: Manda sinal quando vê oportunidade
+        if (!aguardandoValidacao) {
           const analise = analisarPadrao(ultimasVelas);
           if (analise && analise.deve_sinalizar) {
             ultimoSinal = {
+              id: `sinal_${Date.now()}`,
               apos_de: analise.apos_de,
               cashout: analise.cashout,
               max_gales: analise.max_gales,
               ts: new Date().toISOString()
             };
-            
+
+            aguardandoValidacao = true;
+            velaDoSinal = velaAtual;
+
             broadcast("sinal", ultimoSinal);
-            
+
             // 📱 Enviar notificação push
             sendPushNotification(
               "🎯 NOVA ENTRADA!",
               `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
             );
-            
+
             console.log(`🚀 SINAL GERADO: ${analise.apos_de.toFixed(2)}x → ${analise.cashout.toFixed(2)}x (${analise.max_gales} gales)`);
+            console.log(`⏳ Aguardando próxima vela para validação...`);
+          }
+        }
+      }
+    } else if (valor !== undefined && valor !== null) {
+      const velaNum = parseFloat(valor);
+
+      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
+      if (!isNaN(velaNum) && velaNum >= 1.00) {
+        ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
+
+        broadcast("velas", { velas: ultimasVelas });
+        console.log(`✅ Vela REAL Aviator: ${velaNum.toFixed(2)}x`);
+
+        // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
+        if (aguardandoValidacao && velaDoSinal !== null && velaNum !== velaDoSinal) {
+          validarComProximaVela(velaNum);
+        }
+
+        // 🤖 ANÁLISE AUTOMÁTICA: Manda sinal quando vê oportunidade
+        if (!aguardandoValidacao) {
+          const analise = analisarPadrao(ultimasVelas);
+          if (analise && analise.deve_sinalizar) {
+            ultimoSinal = {
+              id: `sinal_${Date.now()}`,
+              apos_de: analise.apos_de,
+              cashout: analise.cashout,
+              max_gales: analise.max_gales,
+              ts: new Date().toISOString()
+            };
+
+            aguardandoValidacao = true;
+            velaDoSinal = velaNum;
+
+            broadcast("sinal", ultimoSinal);
+
+            // 📱 Enviar notificação push
+            sendPushNotification(
+              "🎯 NOVA ENTRADA!",
+              `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
+            );
+
+            console.log(`🚀 SINAL GERADO: ${analise.apos_de.toFixed(2)}x → ${analise.cashout.toFixed(2)}x (${analise.max_gales} gales)`);
+            console.log(`⏳ Aguardando próxima vela para validação...`);
           }
         }
       } else {
         console.log(`❌ Vela FALSA rejeitada: ${isNaN(velaNum) ? 'NaN/inválido' : velaNum.toFixed(2)}x (< 1.00)`);
       }
     }
-    
+
     res.json({ ok: true, velas: ultimasVelas });
   });
 
