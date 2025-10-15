@@ -333,11 +333,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
         if (aguardandoValidacao && velaDoSinal !== null && velaAtual !== velaDoSinal) {
+          console.log(`🔍 Nova vela detectada: ${velaAtual.toFixed(2)}x | Validando resultado...`);
           validarComProximaVela(velaAtual);
         }
-
-        // 🤖 ANÁLISE AUTOMÁTICA: Manda sinal quando vê oportunidade
-        if (!aguardandoValidacao) {
+        // 🤖 ANÁLISE AUTOMÁTICA: BLOQUEADO se aguardando validação
+        else if (aguardandoValidacao) {
+          console.log(`⏸️ AGUARDANDO validação do sinal anterior (${ultimoSinal?.cashout}x)`);
+        }
+        // ✅ LIVRE PARA GERAR NOVO SINAL
+        else {
           const analise = analisarPadrao(ultimasVelas);
           if (analise && analise.deve_sinalizar) {
             ultimoSinal = {
@@ -377,11 +381,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
         if (aguardandoValidacao && velaDoSinal !== null && velaNum !== velaDoSinal) {
+          console.log(`🔍 Nova vela detectada: ${velaNum.toFixed(2)}x | Validando resultado...`);
           validarComProximaVela(velaNum);
         }
-
-        // 🤖 ANÁLISE AUTOMÁTICA: Manda sinal quando vê oportunidade
-        if (!aguardandoValidacao) {
+        // 🤖 ANÁLISE AUTOMÁTICA: BLOQUEADO se aguardando validação
+        else if (aguardandoValidacao) {
+          console.log(`⏸️ AGUARDANDO validação do sinal anterior (${ultimoSinal?.cashout}x)`);
+        }
+        // ✅ LIVRE PARA GERAR NOVO SINAL
+        else {
           const analise = analisarPadrao(ultimasVelas);
           if (analise && analise.deve_sinalizar) {
             ultimoSinal = {
