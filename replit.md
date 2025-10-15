@@ -12,6 +12,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
+### External Signal Integration (Oct 14)
+- **Browser Console Script Approach** - Site https://app.sscashout.online/ uses dynamic JavaScript rendering
+- **SCRIPT-SSCASHOUT-PARA-CONSOLE.js** - User-executed script that captures velas from DOM and sends to backend via `/api/vela`
+- **Why Console Script**: Server-side fetch cannot access JavaScript-rendered content (only gets empty HTML)
+- **Script Features**:
+  - Automatic DOM scanning for vela patterns (e.g., "1.45x", "2.30x")
+  - 3-second interval with duplicate prevention
+  - Visual feedback in console with emojis (🔴 low, 🟡 medium, 🟢 high)
+  - Commands: `startSSCaptura()` and `stopSSCaptura()`
+  - Automatic POST to backend with array of 4 most recent velas
+- **Backend Processing**: Receives velas via POST /api/vela, updates state, triggers signal analysis
+- **Documentation**: INSTRUCOES-USO.md provides step-by-step user guide
+
 ### Critical Implementation Details
 
 **Candle Ordering System** (Oct 7 - FINAL):
