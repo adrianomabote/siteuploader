@@ -59,6 +59,55 @@ async function sendPushNotification(title: string, body: string) {
 
 
 
+// 📊 PADRÕES PRÉ-DEFINIDOS
+const PADROES = [
+  // 🔵 Padrões de 2x–3x (baixos e médios)
+  { nome: "Zigzag Curto", sequencia: [1.2, 2.1, 1.3], cashout: 2.00, tolerancia: 0.3 },
+  { nome: "Escada Crescente", sequencia: [1.1, 1.4, 1.9], cashout: 2.00, tolerancia: 0.3 },
+  { nome: "Pós-Queda Brusca", sequencia: [1.05, 1.2], cashout: 2.00, tolerancia: 0.2 },
+  { nome: "Dois Baixos Seguidos", sequencia: [1.3, 1.4], cashout: 2.00, tolerancia: 0.2 },
+  { nome: "Alternância Leve", sequencia: [1.5, 2.1, 1.6, 2.5], cashout: 2.00, tolerancia: 0.4 },
+  { nome: "Subida Lenta", sequencia: [1.1, 1.3, 1.6, 2.0], cashout: 2.00, tolerancia: 0.3 },
+  { nome: "Repique Médio", sequencia: [1.9, 1.2, 2.8], cashout: 2.00, tolerancia: 0.4 },
+  { nome: "Curva Alternada", sequencia: [1.3, 2.3, 1.2, 2.8], cashout: 2.00, tolerancia: 0.4 },
+  
+  // 🟣 Padrões de 3x (médios altos)
+  { nome: "Pré-Pico Médio", sequencia: [1.3, 1.4, 1.6, 3.2], cashout: 3.00, tolerancia: 0.4 },
+  { nome: "Ciclo Médio", sequencia: [2.0, 1.8, 2.5, 1.4], cashout: 3.00, tolerancia: 0.4 },
+  { nome: "Após Três Médios", sequencia: [2.0, 2.3, 2.1], cashout: 3.00, tolerancia: 0.3 },
+  { nome: "Sequência Estável", sequencia: [1.8, 1.9, 2.1, 2.5], cashout: 3.00, tolerancia: 0.3 },
+  { nome: "Repetição Média", sequencia: [2.2, 1.5, 2.0, 1.4], cashout: 3.00, tolerancia: 0.4 },
+  
+  // 💗 Padrões de 10x (altos)
+  { nome: "Sequência Fria Longa", sequencia: [1.2, 1.4, 1.05, 1.7, 1.3], cashout: 10.00, tolerancia: 0.3 },
+  { nome: "Frio Longo", sequencia: [1.1, 1.3, 1.2, 1.4, 1.5], cashout: 10.00, tolerancia: 0.3 },
+  { nome: "Aquecimento Alto", sequencia: [1.5, 2.0, 2.8, 1.9], cashout: 10.00, tolerancia: 0.5 },
+];
+
+/**
+ * 🔍 VERIFICA SE VELAS CORRESPONDEM A UM PADRÃO
+ */
+function verificarPadrao(velas: number[], padrao: typeof PADROES[0]): boolean {
+  const tamanho = padrao.sequencia.length;
+  if (velas.length < tamanho) return false;
+  
+  // Pegar as últimas N velas (ordem reversa: mais recente primeiro)
+  const velasRecentes = velas.slice(0, tamanho).reverse();
+  
+  // Verificar se cada vela está dentro da tolerância do padrão
+  for (let i = 0; i < tamanho; i++) {
+    const velaAtual = velasRecentes[i];
+    const velaEsperada = padrao.sequencia[i];
+    const diferenca = Math.abs(velaAtual - velaEsperada);
+    
+    if (diferenca > padrao.tolerancia) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 // ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - MODO ASSERTIVO
 function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
   if (velas.length < 4) return null;
@@ -70,6 +119,21 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
   const baixas = velas.filter(v => v < 2.0).length;
   const altas = velas.filter(v => v >= 10.0).length;
 
+  // 🎯 PRIMEIRO: VERIFICAR PADRÕES PRÉ-DEFINIDOS
+  for (const padrao of PADROES) {
+    if (verificarPadrao(velas, padrao)) {
+      const gales = padrao.cashout === 10.00 ? 0 : padrao.cashout === 3.00 ? 1 : 2;
+      console.log(`🎯 PADRÃO DETECTADO: "${padrao.nome}" - Sinal ${padrao.cashout}x`);
+      console.log(`   Velas: [${velas.slice(0, padrao.sequencia.length).map(v => v.toFixed(2)).join(', ')}]`);
+      return { 
+        deve_sinalizar: true, 
+        apos_de: v1, 
+        cashout: padrao.cashout, 
+        max_gales: gales 
+      };
+    }
+  }
+
   // ⛔ BLOQUEIO: 5+ velas baixas consecutivas (proteção)
   if (velas.length >= 5) {
     const ultimas5 = velas.slice(0, 5);
@@ -79,6 +143,8 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
       return null;
     }
   }
+
+  // 📊 FALLBACK: Se nenhum padrão foi detectado, usar análise estatística
 
   // 🟣 PADRÃO 1: PREVISÃO RARA DE 10.00x - Condições MUITO RESTRITIVAS
   // Apenas quando: 4 velas altas (≥4.0x) + crescente + média ≥5.0x + sem baixas
