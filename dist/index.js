@@ -50,7 +50,7 @@ async function registerRoutes(app2) {
       res.write(`:heartbeat
 
 `);
-    }, 3e4);
+    }, 12e4); // 2 minutos (120 segundos) - reduz 75% dos heartbeats
     req.on("close", () => {
       clearInterval(heartbeat);
       connectedClients.delete(res);

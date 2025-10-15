@@ -155,7 +155,7 @@
       try { es && es.close(); } catch (_) {}
       setStatus(false);
       connectSSE();
-    }, 40000);
+    }, 150000); // 2.5 minutos - reduz reconexões desnecessárias
   }
 
   let lastSignal = null;
