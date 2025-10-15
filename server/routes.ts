@@ -76,14 +76,12 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
   const ultimasTres = velas.slice(-3);
   const ultimasQuatro = velas.slice(-4);
   const media = ultimasTres.reduce((a, b) => a + b, 0) / ultimasTres.length;
-  const baixas = ultimasTres.filter(v => v < 2.0).length;
-  const muitoBaixas = ultimasQuatro.filter(v => v < 1.5).length;
   
-  // Padrão 1: Última vela baixa (< 1.5x) - boa chance de vir 2.00x
-  if (ultimaVela < 1.50 && baixas >= 2) {
-    // 75% de chance de ser 2.00x, 25% de ser 3.00x
-    const cashout = Math.random() < 0.75 ? 2.00 : 3.00;
-    
+  // ⚡ MODO ULTRA AGRESSIVO - MANDA SINAL SEMPRE! ⚡
+  
+  // Padrão 1: Vela MUITO baixa (< 1.50x) - SEMPRE sinalizar
+  if (ultimaVela < 1.50) {
+    const cashout = Math.random() < 0.70 ? 2.00 : 3.00;
     return {
       deveSinalizar: true,
       apos_de: ultimaVela,
@@ -92,11 +90,9 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
     };
   }
   
-  // Padrão 2: Sequência de baixas nas últimas 4 velas
-  if (muitoBaixas >= 2 && ultimaVela < 2.0) {
-    // 80% de chance de ser 2.00x
-    const cashout = Math.random() < 0.80 ? 2.00 : 3.00;
-    
+  // Padrão 2: Vela baixa (< 2.00x) - SEMPRE sinalizar
+  if (ultimaVela < 2.00) {
+    const cashout = Math.random() < 0.60 ? 2.00 : 3.00;
     return {
       deveSinalizar: true,
       apos_de: ultimaVela,
@@ -105,11 +101,20 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
     };
   }
   
-  // Padrão 3: Média baixa e última vela menor que 1.8
-  if (media < 2.0 && ultimaVela < 1.80) {
-    // 70% de chance de ser 2.00x
-    const cashout = Math.random() < 0.70 ? 2.00 : 3.00;
-    
+  // Padrão 3: Vela média (2.00x - 3.00x) - Tentar pegar 3.00x ou mais
+  if (ultimaVela >= 2.00 && ultimaVela < 3.00) {
+    const cashout = Math.random() < 0.50 ? 3.00 : 4.00;
+    return {
+      deveSinalizar: true,
+      apos_de: ultimaVela,
+      cashout: cashout,
+      max_gales: 1
+    };
+  }
+  
+  // Padrão 4: Vela alta (3.00x - 5.00x) - Tentar recuperação
+  if (ultimaVela >= 3.00 && ultimaVela < 5.00) {
+    const cashout = Math.random() < 0.40 ? 2.00 : 3.00;
     return {
       deveSinalizar: true,
       apos_de: ultimaVela,
@@ -118,8 +123,25 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
     };
   }
   
-  // Não sinalizar em outros casos (para não mandar toda hora)
-  return null;
+  // Padrão 5: Vela MUITO alta (>= 5.00x) - Grande chance de vir baixa
+  if (ultimaVela >= 5.00) {
+    const cashout = 2.00; // Quase certeza de vir pelo menos 2x
+    return {
+      deveSinalizar: true,
+      apos_de: ultimaVela,
+      cashout: cashout,
+      max_gales: 3
+    };
+  }
+  
+  // FALLBACK: Se não pegou nenhum padrão, MANDA MESMO ASSIM!
+  const cashout = Math.random() < 0.50 ? 2.00 : 3.00;
+  return {
+    deveSinalizar: true,
+    apos_de: ultimaVela,
+    cashout: cashout,
+    max_gales: 1
+  };
 }
 
 async function buscarVelasReais() {

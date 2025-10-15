@@ -21,6 +21,10 @@ Preferred communication style: Simple, everyday language.
   - Selects first 4 valid velas from API response
   - Only updates when velas change (prevents duplicate processing)
 - **Integration Flow**: SSCashout API → Backend (1s polling) → SSE broadcast → Frontend real-time update
+- **ULTRA-AGGRESSIVE Signal Generation**: 
+  - Sends entry signals for ANY opportunity, even with minimal probability
+  - 6 distinct pattern detections covering ALL candle ranges
+  - NEVER skips opportunities - always generates signal regardless of probability
 - **Fallback Support**: Still accepts manual velas via POST /api/vela for compatibility
 - **Documentation**: SISTEMA-AUTOMATICO.md explains automatic system architecture
 
