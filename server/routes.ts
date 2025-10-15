@@ -335,56 +335,17 @@ function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
   }
 }
 
-// Sistema próprio de geração de velas
-let modoGeracaoAutomatica = true;
-let ultimaAtualizacaoManual = 0;
-
-function gerarNovaVela(): number {
-  const rand = Math.random();
-  
-  if (rand < 0.50) {
-    return parseFloat((1.00 + Math.random() * 0.99).toFixed(2));
-  } else if (rand < 0.80) {
-    return parseFloat((2.00 + Math.random() * 2.00).toFixed(2));
-  } else if (rand < 0.95) {
-    return parseFloat((4.00 + Math.random() * 6.00).toFixed(2));
-  } else {
-    return parseFloat((10.00 + Math.random() * 40.00).toFixed(2));
-  }
-}
-
-function gerarVelasAutomaticas() {
-  // Se recebeu velas manuais há menos de 30 segundos, não gerar
-  if (Date.now() - ultimaAtualizacaoManual < 30000) {
-    return;
-  }
-  
-  const novaVela = gerarNovaVela();
-  const snapshotAnterior = [...ultimasVelas];
-  
-  ultimasVelas = [novaVela, ...ultimasVelas.slice(0, 3)];
-  
-  broadcast("velas", { velas: ultimasVelas });
-  console.log(`🎲 Vela gerada: ${novaVela.toFixed(2)}x | [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-  
-  if (snapshotAnterior.length > 0) {
-    processarNovaVela(snapshotAnterior, novaVela);
-  }
-}
-
-function iniciarSistemaAutomatico() {
-  console.log("🚀 Sistema Próprio de Velas ATIVADO!");
-  console.log("🎲 Modo: Geração automática + Recebimento manual");
-  console.log("⚡ Atualização automática a cada 8 segundos");
-  console.log("📡 API disponível: POST /api/vela (enviar velas manualmente)");
+// Sistema de recebimento de velas do Aviator (via script console)
+function iniciarSistemaAviator() {
+  console.log("🚀 Sistema de Captura Aviator ATIVADO!");
+  console.log("📡 Aguardando velas do script no console do Aviator");
+  console.log("⚡ Atualização: A cada nova vela recebida");
+  console.log("📍 Endpoint: POST /api/vela");
   
   if (!servidorSinaisOnline) {
     servidorSinaisOnline = true;
     broadcast("servidor_status", { online: true });
   }
-  
-  // Gerar velas automaticamente a cada 8 segundos
-  setInterval(gerarVelasAutomaticas, 8000);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -496,12 +457,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // API: Enviar nova vela (para teste/bot/console)
+  // API: Receber velas do script Aviator
   app.post("/api/vela", express.json(), (req, res) => {
     const { valor, valores } = req.body;
-    
-    // Atualizar timestamp da última atualização manual
-    ultimaAtualizacaoManual = Date.now();
     
     if (valores && Array.isArray(valores)) {
       const velasValidas = valores
@@ -514,7 +472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ultimasVelas = velasValidas;
         
         broadcast("velas", { velas: ultimasVelas });
-        console.log(`📥 Velas recebidas: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+        console.log(`🎮 Velas Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
         
         if (snapshotAnterior.length > 0 && snapshotAnterior[0] !== ultimasVelas[0]) {
           processarNovaVela(snapshotAnterior, ultimasVelas[0]);
@@ -527,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
         
         broadcast("velas", { velas: ultimasVelas });
-        console.log(`📥 Vela recebida: ${velaNum.toFixed(2)}x`);
+        console.log(`🎮 Vela Aviator: ${velaNum.toFixed(2)}x`);
         
         if (snapshotAnterior.length > 0) {
           processarNovaVela(snapshotAnterior, velaNum);
@@ -578,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  iniciarSistemaAutomatico();
+  iniciarSistemaAviator();
 
   return httpServer;
 }

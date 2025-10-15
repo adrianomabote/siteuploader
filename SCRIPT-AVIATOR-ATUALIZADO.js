@@ -18,7 +18,7 @@
   
   // ⚙️ CONFIGURAÇÃO
   const CONFIG = {
-    intervalo: 5000,  // 5 segundos
+    intervalo: 1000,  // 1 segundo
     urlBackend: 'https://bot-cyber-hacker-cashout-aviator.replit.app/api/vela',
     tentativasReconexao: 3
   };
@@ -135,7 +135,7 @@
     
     executarCaptura();
     window.aviatorInterval = setInterval(executarCaptura, CONFIG.intervalo);
-    console.log(`✅ Captura iniciada! (a cada ${CONFIG.intervalo/1000}s)`);
+    console.log(`✅ Captura iniciada! (a cada 1 segundo)`);
   };
   
   // Parar qualquer captura anterior
