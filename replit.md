@@ -21,10 +21,13 @@ Preferred communication style: Simple, everyday language.
   - Selects first 4 valid velas from API response
   - Only updates when velas change (prevents duplicate processing)
 - **Integration Flow**: SSCashout API → Backend (1s polling) → SSE broadcast → Frontend real-time update
-- **ULTRA-AGGRESSIVE Signal Generation**: 
-  - Sends entry signals for ANY opportunity, even with minimal probability
-  - 6 distinct pattern detections covering ALL candle ranges
-  - NEVER skips opportunities - always generates signal regardless of probability
+- **Intelligent Signal Generation**: 
+  - Blocks signals when 5 consecutive candles < 2.00x (bad period detection)
+  - Sends 2.00x/3.00x signals when pattern analysis shows probability
+  - Sends 6.00x signals (30% chance) when detecting potential high candle
+  - Sends 10.00x signals when detecting potential VERY high candle (pink/rosa)
+  - 6 distinct pattern detections with selective triggering
+  - Smart decision-making - only signals when real opportunity is identified
 - **Fallback Support**: Still accepts manual velas via POST /api/vela for compatibility
 - **Documentation**: SISTEMA-AUTOMATICO.md explains automatic system architecture
 

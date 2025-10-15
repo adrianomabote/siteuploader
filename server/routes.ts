@@ -70,17 +70,66 @@ function gerarVela(): number {
 }
 
 function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
-  if (velas.length < 3) return null;
+  if (velas.length < 4) return null;
   
   const ultimaVela = velas[velas.length - 1];
-  const ultimasTres = velas.slice(-3);
+  const todasVelas = velas;
   const ultimasQuatro = velas.slice(-4);
-  const media = ultimasTres.reduce((a, b) => a + b, 0) / ultimasTres.length;
+  const ultimasCinco = velas.length >= 5 ? velas.slice(-5) : velas;
   
-  // ⚡ MODO ULTRA AGRESSIVO - MANDA SINAL SEMPRE! ⚡
+  // ❌ REGRA 1: NÃO mandar se tiver 5 velas seguidas abaixo de 2.00x
+  const velasAbaixoDe2 = ultimasCinco.filter(v => v < 2.00).length;
+  if (ultimasCinco.length >= 5 && velasAbaixoDe2 >= 5) {
+    console.log("⛔ Bloqueado: 5 velas abaixo de 2.00x");
+    return null;
+  }
   
-  // Padrão 1: Vela MUITO baixa (< 1.50x) - SEMPRE sinalizar
-  if (ultimaVela < 1.50) {
+  // 🎯 PADRÃO 1: Possível vela MUITO alta (>= 10.00x) - ROSA
+  // Após sequência de médias/altas, pode vir uma EXPLOSÃO
+  const velasMedias = ultimasQuatro.filter(v => v >= 2.00 && v < 5.00).length;
+  const velasAltas = ultimasQuatro.filter(v => v >= 5.00).length;
+  
+  if (velasAltas >= 1 && velasMedias >= 2) {
+    // Grande chance de vir uma vela ROSA (muito alta)
+    return {
+      deveSinalizar: true,
+      apos_de: ultimaVela,
+      cashout: 10.00,
+      max_gales: 1
+    };
+  }
+  
+  // 🎯 PADRÃO 2: Possível vela alta (>= 6.00x)
+  // Após 2-3 velas baixas/médias, pode vir uma alta
+  const velasBaixas = ultimasQuatro.filter(v => v < 2.00).length;
+  const media = ultimasQuatro.reduce((a, b) => a + b, 0) / ultimasQuatro.length;
+  
+  if (velasBaixas >= 2 && media < 3.00 && ultimaVela < 2.50) {
+    // 30% de chance de pedir 6.00x, 70% de pedir 2-3x
+    if (Math.random() < 0.30) {
+      return {
+        deveSinalizar: true,
+        apos_de: ultimaVela,
+        cashout: 6.00,
+        max_gales: 1
+      };
+    }
+  }
+  
+  // 🎯 PADRÃO 3: Possível 2.00x ou 3.00x (PADRÃO PRINCIPAL)
+  // Última vela baixa (< 1.50x) com bom histórico
+  if (ultimaVela < 1.50 && velasBaixas >= 1 && velasBaixas < 4) {
+    const cashout = Math.random() < 0.60 ? 2.00 : 3.00;
+    return {
+      deveSinalizar: true,
+      apos_de: ultimaVela,
+      cashout: cashout,
+      max_gales: 2
+    };
+  }
+  
+  // 🎯 PADRÃO 4: Após vela alta (>= 5.00x), vem média/baixa
+  if (ultimaVela >= 5.00) {
     const cashout = Math.random() < 0.70 ? 2.00 : 3.00;
     return {
       deveSinalizar: true,
@@ -90,31 +139,9 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
     };
   }
   
-  // Padrão 2: Vela baixa (< 2.00x) - SEMPRE sinalizar
-  if (ultimaVela < 2.00) {
-    const cashout = Math.random() < 0.60 ? 2.00 : 3.00;
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: cashout,
-      max_gales: 1
-    };
-  }
-  
-  // Padrão 3: Vela média (2.00x - 3.00x) - Tentar pegar 3.00x ou mais
-  if (ultimaVela >= 2.00 && ultimaVela < 3.00) {
-    const cashout = Math.random() < 0.50 ? 3.00 : 4.00;
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: cashout,
-      max_gales: 1
-    };
-  }
-  
-  // Padrão 4: Vela alta (3.00x - 5.00x) - Tentar recuperação
-  if (ultimaVela >= 3.00 && ultimaVela < 5.00) {
-    const cashout = Math.random() < 0.40 ? 2.00 : 3.00;
+  // 🎯 PADRÃO 5: Média baixa e última vela razoável
+  if (media < 2.50 && ultimaVela >= 1.20 && ultimaVela < 2.50 && velasBaixas >= 1) {
+    const cashout = Math.random() < 0.65 ? 2.00 : 3.00;
     return {
       deveSinalizar: true,
       apos_de: ultimaVela,
@@ -123,25 +150,19 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
     };
   }
   
-  // Padrão 5: Vela MUITO alta (>= 5.00x) - Grande chance de vir baixa
-  if (ultimaVela >= 5.00) {
-    const cashout = 2.00; // Quase certeza de vir pelo menos 2x
+  // 🎯 PADRÃO 6: Após vela média-alta, pode vir 2-3x
+  if (ultimaVela >= 2.50 && ultimaVela < 5.00 && velasBaixas === 0) {
+    const cashout = Math.random() < 0.50 ? 2.00 : 3.00;
     return {
       deveSinalizar: true,
       apos_de: ultimaVela,
       cashout: cashout,
-      max_gales: 3
+      max_gales: 1
     };
   }
   
-  // FALLBACK: Se não pegou nenhum padrão, MANDA MESMO ASSIM!
-  const cashout = Math.random() < 0.50 ? 2.00 : 3.00;
-  return {
-    deveSinalizar: true,
-    apos_de: ultimaVela,
-    cashout: cashout,
-    max_gales: 1
-  };
+  // ⛔ Não sinalizar em outros casos
+  return null;
 }
 
 async function buscarVelasReais() {
