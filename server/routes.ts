@@ -57,210 +57,8 @@ async function sendPushNotification(title: string, body: string) {
 
 
 
-function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
-  if (velas.length < 4) return null;
-  
-  const ultimaVela = velas[velas.length - 1];
-  const todasVelas = velas;
-  const ultimasQuatro = velas.slice(-4);
-  const ultimasCinco = velas.length >= 5 ? velas.slice(-5) : velas;
-  
-  // ❌ REGRA 1: NÃO mandar se tiver 5 velas seguidas abaixo de 2.00x
-  const velasAbaixoDe2 = ultimasCinco.filter(v => v < 2.00).length;
-  if (ultimasCinco.length >= 5 && velasAbaixoDe2 >= 5) {
-    console.log("⛔ Bloqueado: 5 velas abaixo de 2.00x");
-    return null;
-  }
-  
-  // 🎯 PADRÃO 1: Possível vela MUITO alta (>= 10.00x) - ROSA
-  // Após sequência de médias/altas, pode vir uma EXPLOSÃO
-  const velasMedias = ultimasQuatro.filter(v => v >= 2.00 && v < 5.00).length;
-  const velasAltas = ultimasQuatro.filter(v => v >= 5.00).length;
-  
-  if (velasAltas >= 1 && velasMedias >= 2) {
-    // Grande chance de vir uma vela ROSA (muito alta)
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: 10.00,
-      max_gales: 1
-    };
-  }
-  
-  // 🎯 PADRÃO 2: Possível vela alta (>= 6.00x)
-  // Após 2-3 velas baixas/médias, pode vir uma alta
-  const velasBaixas = ultimasQuatro.filter(v => v < 2.00).length;
-  const media = ultimasQuatro.reduce((a, b) => a + b, 0) / ultimasQuatro.length;
-  
-  if (velasBaixas >= 2 && media < 3.00 && ultimaVela < 2.50) {
-    // 30% de chance de pedir 6.00x, 70% de pedir 2-3x
-    if (Math.random() < 0.30) {
-      return {
-        deveSinalizar: true,
-        apos_de: ultimaVela,
-        cashout: 6.00,
-        max_gales: 1
-      };
-    }
-  }
-  
-  // 🎯 PADRÃO 3: Possível 2.00x ou 3.00x (PADRÃO PRINCIPAL)
-  // Última vela baixa (< 1.50x) com bom histórico
-  if (ultimaVela < 1.50 && velasBaixas >= 1 && velasBaixas < 4) {
-    const cashout = Math.random() < 0.60 ? 2.00 : 3.00;
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: cashout,
-      max_gales: 2
-    };
-  }
-  
-  // 🎯 PADRÃO 4: Após vela alta (>= 5.00x), vem média/baixa
-  if (ultimaVela >= 5.00) {
-    const cashout = Math.random() < 0.70 ? 2.00 : 3.00;
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: cashout,
-      max_gales: 2
-    };
-  }
-  
-  // 🎯 PADRÃO 5: Média baixa e última vela razoável
-  if (media < 2.50 && ultimaVela >= 1.20 && ultimaVela < 2.50 && velasBaixas >= 1) {
-    const cashout = Math.random() < 0.65 ? 2.00 : 3.00;
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: cashout,
-      max_gales: 2
-    };
-  }
-  
-  // 🎯 PADRÃO 6: Após vela média-alta, pode vir 2-3x
-  if (ultimaVela >= 2.50 && ultimaVela < 5.00 && velasBaixas === 0) {
-    const cashout = Math.random() < 0.50 ? 2.00 : 3.00;
-    return {
-      deveSinalizar: true,
-      apos_de: ultimaVela,
-      cashout: cashout,
-      max_gales: 1
-    };
-  }
-  
-  // ⛔ Não sinalizar em outros casos
-  return null;
-}
-
-
-
-function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
-  if (!sinalAtivo) {
-    // Usar snapshot anterior para análise
-    if (snapshotAnterior.length === 0) return;
-    
-    const analise = analisarPadrao(snapshotAnterior);
-    
-    if (analise && analise.deveSinalizar) {
-      // Sinal "Depois de:" usa a vela mais recente (índice 0)
-      const velaDaEsquerda = ultimasVelas[0];
-      
-      // SEMPRE limpar a entrada antes de mostrar novo sinal
-      broadcast("limpar_entrada", {});
-      console.log("🧹 Limpando entrada antes do novo sinal");
-      
-      // Pequeno delay para garantir que a limpeza foi processada
-      setTimeout(() => {
-        ultimoSinal = {
-          apos_de: velaDaEsquerda,
-          cashout: analise.cashout,
-          max_gales: analise.max_gales,
-          ts: new Date().toISOString()
-        };
-        
-        sinalAtivo = {
-          ...ultimoSinal,
-          velaInicial: velaDaEsquerda,
-          tentativas: 0,
-          id: Date.now().toString()
-        };
-        
-        broadcast("sinal", ultimoSinal);
-        console.log(`🎯 Sinal: Depois de ${velaDaEsquerda.toFixed(2)}x | Cashout ${ultimoSinal.cashout.toFixed(2)}x`);
-        
-        // Enviar notificação push
-        sendPushNotification(
-          "Entrada confirmada",
-          `Depois de ${novaVela.toFixed(2)}x • Cashout ${ultimoSinal.cashout.toFixed(2)}x`
-        );
-        
-        // Limpar entrada após 15 segundos se não houver nova vela
-        setTimeout(() => {
-          if (sinalAtivo && sinalAtivo.id === ultimoSinal.id && sinalAtivo.tentativas === 0) {
-            broadcast("limpar_entrada", { id: sinalAtivo.id });
-            console.log("⏰ Entrada expirada (sem nova vela)");
-            sinalAtivo = null;
-          }
-        }, 15000);
-      }, 500); // Delay de 500ms para garantir que a limpeza seja processada primeiro
-    }
-  } else {
-    // Validar APENAS com a primeira vela que chega após a entrada
-    if (!sinalAtivo.id || !sinalAtivo.cashout) {
-      console.log("⚠️ PROTEÇÃO: Tentativa de validar resultado sem sinal ativo válido");
-      sinalAtivo = null;
-      return;
-    }
-    
-    // Confirma GREEN ou LOSS com a primeira vela recebida
-    if (novaVela >= sinalAtivo.cashout) {
-      ultimoResultado = {
-        status: 'green',
-        vela_final: novaVela,
-        id: sinalAtivo.id,
-        ts: new Date().toISOString()
-      };
-      
-      broadcast("resultado", ultimoResultado);
-      console.log(`✅ GREEN! Vela: ${novaVela.toFixed(2)}x (Alvo: ${sinalAtivo.cashout.toFixed(2)}x)`);
-      
-      // Enviar notificação push de GREEN
-      sendPushNotification(
-        "✅ GREEN!",
-        `Vitória confirmada ${novaVela.toFixed(2)}x`
-      );
-      
-      // Limpar imediatamente após confirmar
-      broadcast("limpar_entrada", { id: sinalAtivo.id });
-      console.log("🧹 Entrada limpa após GREEN");
-      
-      sinalAtivo = null;
-    } else {
-      ultimoResultado = {
-        status: 'loss',
-        vela_final: novaVela,
-        id: sinalAtivo.id,
-        ts: new Date().toISOString()
-      };
-      
-      broadcast("resultado", ultimoResultado);
-      console.log(`❌ LOSS! Vela: ${novaVela.toFixed(2)}x (Alvo: ${sinalAtivo.cashout.toFixed(2)}x)`);
-      
-      // Enviar notificação push de LOSS
-      sendPushNotification(
-        "❌ LOSS",
-        `Tentativas esgotadas ${novaVela.toFixed(2)}x`
-      );
-      
-      // Limpar imediatamente após confirmar
-      broadcast("limpar_entrada", { id: sinalAtivo.id });
-      console.log("🧹 Entrada limpa após LOSS");
-      
-      sinalAtivo = null;
-    }
-  }
-}
+// ❌ ANÁLISE DE PADRÕES DESATIVADA - Apenas exibir velas reais
+// O sistema agora funciona em modo PURO: só mostra as velas capturadas do Aviator
 
 // Sistema de recebimento de velas do Aviator (via script console)
 function iniciarSistemaAviator() {
@@ -395,28 +193,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 4);
       
       if (velasValidas.length >= 4) {
-        const snapshotAnterior = [...ultimasVelas];
         ultimasVelas = velasValidas;
         
         broadcast("velas", { velas: ultimasVelas });
         console.log(`🎮 Velas Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-        
-        if (snapshotAnterior.length > 0 && snapshotAnterior[0] !== ultimasVelas[0]) {
-          processarNovaVela(snapshotAnterior, ultimasVelas[0]);
-        }
       }
     } else if (valor !== undefined && valor !== null) {
       const velaNum = parseFloat(valor);
       if (!isNaN(velaNum) && velaNum >= 1.00 && velaNum <= 99.99) {
-        const snapshotAnterior = [...ultimasVelas];
         ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
         
         broadcast("velas", { velas: ultimasVelas });
         console.log(`🎮 Vela Aviator: ${velaNum.toFixed(2)}x`);
-        
-        if (snapshotAnterior.length > 0) {
-          processarNovaVela(snapshotAnterior, velaNum);
-        }
       }
     }
     
