@@ -57,46 +57,66 @@ async function sendPushNotification(title: string, body: string) {
 
 
 
-// ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - ATIVADA
+// ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - MODO ASSERTIVO
 function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
   if (velas.length < 4) return null;
   
   const [v1, v2, v3, v4] = velas.slice(0, 4);
   const media = (v1 + v2 + v3 + v4) / 4;
-  const baixas = velas.filter(v => v < 2.0).length;
-  
-  // 🔴 PADRÃO 1: 3+ velas baixas consecutivas (< 2.0) = Sinal 2.0x/3.0x
-  if (baixas >= 3) {
-    console.log("🎯 PADRÃO DETECTADO: 3+ velas baixas - Sinal 2.00x/3.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
-  }
-  
-  // 🟡 PADRÃO 2: Média baixa (< 2.5) = Sinal conservador 2.0x
-  if (media < 2.5 && baixas >= 2) {
-    console.log("🎯 PADRÃO DETECTADO: Média baixa - Sinal 2.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
-  }
-  
-  // 🟢 PADRÃO 3: Sequência crescente = Sinal moderado 3.5x
-  if (v1 > v2 && v2 > v3 && v3 > v4 && media > 2.0) {
-    console.log("🎯 PADRÃO DETECTADO: Sequência crescente - Sinal 3.50x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.50, max_gales: 2 };
-  }
-  
-  // 🔵 PADRÃO 4: Alta volatilidade (diferença > 5.0 entre máx e mín) = Sinal agressivo 6.0x
   const maxima = Math.max(...velas);
   const minima = Math.min(...velas);
-  if ((maxima - minima) > 5.0 && baixas <= 1) {
-    console.log("🎯 PADRÃO DETECTADO: Alta volatilidade - Sinal 6.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 6.00, max_gales: 1 };
+  const baixas = velas.filter(v => v < 2.0).length;
+  const altas = velas.filter(v => v >= 10.0).length;
+  
+  // ⛔ BLOQUEIO: 5+ velas baixas consecutivas (proteção)
+  if (velas.length >= 5) {
+    const ultimas5 = velas.slice(0, 5);
+    const todas5Baixas = ultimas5.every(v => v < 2.0);
+    if (todas5Baixas) {
+      console.log("⛔ BLOQUEADO: 5 velas baixas consecutivas - aguardando recuperação");
+      return null;
+    }
   }
   
-  // 🟣 PADRÃO 5: Vela muito alta detectada (> 10.0) = Sinal ROSA 10.0x
-  if (velas.some(v => v > 10.0)) {
-    console.log("🎯 PADRÃO DETECTADO: Vela alta - Sinal ROSA 10.00x");
+  // 🟣 PADRÃO 1: VELA ROSA (>10.0x) - OPORTUNIDADE RARA
+  if (altas >= 1) {
+    console.log("🎯 PADRÃO 1: Vela ROSA detectada - Sinal 10.00x");
     return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
   }
   
+  // 🔵 PADRÃO 2: ALTA VOLATILIDADE - Diferença > 5.0x
+  if ((maxima - minima) > 5.0 && baixas <= 1) {
+    console.log("🎯 PADRÃO 2: Alta volatilidade detectada - Sinal 6.00x");
+    return { deve_sinalizar: true, apos_de: v1, cashout: 6.00, max_gales: 1 };
+  }
+  
+  // 🔴 PADRÃO 3: 3+ VELAS BAIXAS - Forte indicador
+  if (baixas >= 3 && media < 2.0) {
+    console.log("🎯 PADRÃO 3: 3+ velas baixas - Sinal 3.00x");
+    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
+  }
+  
+  // 🟡 PADRÃO 4: MÉDIA BAIXA COM 2+ BAIXAS
+  if (media < 2.5 && baixas >= 2) {
+    console.log("🎯 PADRÃO 4: Média baixa com 2+ baixas - Sinal 2.00x");
+    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
+  }
+  
+  // 🟢 PADRÃO 5: SEQUÊNCIA CRESCENTE - Tendência positiva
+  const crescente = v4 < v3 && v3 < v2 && v2 < v1;
+  if (crescente && media > 2.0 && media < 5.0) {
+    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 3.00x");
+    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
+  }
+  
+  // 🟠 PADRÃO 6: RECUPERAÇÃO APÓS BAIXA - Última vela > 2.5x e anteriores baixas
+  if (v1 >= 2.5 && v1 < 5.0 && baixas >= 2) {
+    console.log("🎯 PADRÃO 6: Recuperação detectada - Sinal 2.00x");
+    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
+  }
+  
+  // ⚪ Nenhum padrão favorável detectado
+  console.log("⚪ Nenhum padrão favorável - aguardando oportunidade");
   return null;
 }
 
