@@ -144,20 +144,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ ok: false, error: "Formato inválido" });
     }
     
-    const sinaisProcessados = rodadas
-      .map((valor: string | number) => {
-        if (typeof valor === 'string') {
-          return parseFloat(valor.replace('x', ''));
-        }
-        return Number(valor);
-      })
-      .filter((num: number) => !isNaN(num))
-      .slice(0, 5);
+    const velasProcessadas: number[] = [];
+    const velasRejeitadas: number[] = [];
     
-    if (sinaisProcessados.length > 0) {
-      ultimasVelas = sinaisProcessados;
+    for (const valor of rodadas) {
+      let num: number;
+      
+      if (typeof valor === 'string') {
+        num = parseFloat(valor.replace('x', ''));
+      } else {
+        num = Number(valor);
+      }
+      
+      // ✅ FILTRO RIGOROSO: Apenas velas realistas do Aviator
+      if (!isNaN(num) && num >= 1.00 && num <= 50.00) {
+        velasProcessadas.push(num);
+      } else {
+        velasRejeitadas.push(num);
+      }
+    }
+    
+    if (velasRejeitadas.length > 0) {
+      console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN' : v.toFixed(2)).join(', ')}]`);
+    }
+    
+    if (velasProcessadas.length > 0) {
+      ultimasVelas = velasProcessadas.slice(0, 5);
       broadcast("velas", { velas: ultimasVelas });
-      console.log("✅ Sinais recebidos:", ultimasVelas);
+      console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
       
       if (!servidorSinaisOnline) {
         servidorSinaisOnline = true;
@@ -187,24 +201,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { valor, valores } = req.body;
     
     if (valores && Array.isArray(valores)) {
-      const velasValidas = valores
-        .map((v: any) => parseFloat(v))
-        .filter((v: number) => !isNaN(v) && v >= 1.00 && v <= 99.99)
-        .slice(0, 4);
+      const velasProcessadas = valores.map((v: any) => parseFloat(v));
+      const velasValidas: number[] = [];
+      const velasRejeitadas: number[] = [];
+      
+      for (const v of velasProcessadas) {
+        // ✅ FILTRO RIGOROSO: Apenas velas realistas do Aviator
+        if (!isNaN(v) && v >= 1.00 && v <= 50.00) {
+          velasValidas.push(v);
+        } else {
+          velasRejeitadas.push(v);
+        }
+      }
+      
+      if (velasRejeitadas.length > 0) {
+        console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN' : v.toFixed(2)).join(', ')}]`);
+      }
       
       if (velasValidas.length >= 4) {
-        ultimasVelas = velasValidas;
+        ultimasVelas = velasValidas.slice(0, 4);
         
         broadcast("velas", { velas: ultimasVelas });
-        console.log(`🎮 Velas Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
+        console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
       }
     } else if (valor !== undefined && valor !== null) {
       const velaNum = parseFloat(valor);
-      if (!isNaN(velaNum) && velaNum >= 1.00 && velaNum <= 99.99) {
+      
+      // ✅ FILTRO RIGOROSO: Apenas velas realistas do Aviator
+      if (!isNaN(velaNum) && velaNum >= 1.00 && velaNum <= 50.00) {
         ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
         
         broadcast("velas", { velas: ultimasVelas });
-        console.log(`🎮 Vela Aviator: ${velaNum.toFixed(2)}x`);
+        console.log(`✅ Vela REAL Aviator: ${velaNum.toFixed(2)}x`);
+      } else {
+        console.log(`❌ Vela FALSA rejeitada: ${isNaN(velaNum) ? 'NaN' : velaNum.toFixed(2)}x`);
       }
     }
     
