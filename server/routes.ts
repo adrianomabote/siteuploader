@@ -55,19 +55,7 @@ async function sendPushNotification(title: string, body: string) {
   deadSubscriptions.forEach(sub => pushSubscriptions.delete(sub));
 }
 
-function gerarVela(): number {
-  const rand = Math.random();
-  
-  if (rand < 0.50) {
-    return parseFloat((1.00 + Math.random() * 0.99).toFixed(2));
-  } else if (rand < 0.80) {
-    return parseFloat((2.00 + Math.random() * 2.00).toFixed(2));
-  } else if (rand < 0.95) {
-    return parseFloat((4.00 + Math.random() * 6.00).toFixed(2));
-  } else {
-    return parseFloat((10.00 + Math.random() * 40.00).toFixed(2));
-  }
-}
+
 
 function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
   if (velas.length < 4) return null;
@@ -165,68 +153,7 @@ function analisarPadrao(velas: number[]): { deveSinalizar: boolean; apos_de: num
   return null;
 }
 
-async function buscarVelasReais() {
-  try {
-    const response = await fetch('https://fonte-de-sinais.replit.app/api/sinais');
-    const data = await response.json();
-    
-    if (Array.isArray(data) && data.length > 0) {
-      const velasNumericas = data.map((v: string) => 
-        parseFloat(v.toString().replace('x', ''))
-      );
-      
-      // Pegar as 4 primeiras velas (as mais recentes do servidor)
-      // Servidor retorna: [recente, ..., antiga]
-      const velasOrdenadas = velasNumericas.slice(0, 4);
-      
-      // Verificar se houve mudança na primeira vela (mais recente)
-      const velaNovaRecente = velasOrdenadas[0];
-      const velaAnteriorRecente = ultimasVelas.length > 0 ? ultimasVelas[0] : null;
-      
-      if (ultimasVelas.length === 0 || velaAnteriorRecente !== velaNovaRecente) {
-        // Guardar snapshot anterior para análise
-        const snapshotAnterior = [...ultimasVelas];
-        
-        // Atualizar array: [0]=recente ... [3]=antiga
-        ultimasVelas = velasOrdenadas;
-        
-        // Broadcast
-        broadcast("velas", { velas: ultimasVelas });
-        console.log(`🎲 Velas: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-        
-        // Se houve mudança = nova vela chegou
-        if (velaAnteriorRecente !== null && velaAnteriorRecente !== velaNovaRecente) {
-          processarNovaVela(snapshotAnterior, velaNovaRecente);
-        }
-      }
-      
-      if (!servidorSinaisOnline) {
-        servidorSinaisOnline = true;
-        broadcast("servidor_status", { online: true });
-        console.log("✅ Conectado ao servidor de sinais!");
-      }
-    }
-  } catch (error) {
-    // Usar velas geradas localmente como fallback
-    if (servidorSinaisOnline) {
-      servidorSinaisOnline = false;
-      broadcast("servidor_status", { online: false });
-      console.log('⚠️ API externa indisponível - usando gerador local');
-    }
-    
-    // Gerar nova vela localmente
-    const novaVela = gerarVela();
-    const snapshotAnterior = [...ultimasVelas];
-    ultimasVelas = [novaVela, ...ultimasVelas.slice(0, 3)];
-    
-    broadcast("velas", { velas: ultimasVelas });
-    console.log(`🎲 Velas (local): [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-    
-    if (snapshotAnterior.length > 0) {
-      processarNovaVela(snapshotAnterior, novaVela);
-    }
-  }
-}
+
 
 function processarNovaVela(snapshotAnterior: number[], novaVela: number) {
   if (!sinalAtivo) {
