@@ -14,13 +14,13 @@ Preferred communication style: Simple, everyday language.
 
 ### External Signal Integration - 100% Automatic (Oct 15)
 - **Public API Discovery** - Found https://app.sscashout.online/api/velas is publicly accessible
-- **Automatic Polling System** - Backend fetches velas every 5 seconds automatically
+- **Ultra-Fast Polling System** - Backend fetches velas every 1 second automatically (real-time!)
 - **Zero Manual Intervention** - No console scripts needed, runs 24/7 on server
 - **Smart Filtering**:
   - Validates velas between 1.00 and 99.99 (filters outliers like 336.83)
   - Selects first 4 valid velas from API response
   - Only updates when velas change (prevents duplicate processing)
-- **Integration Flow**: SSCashout API → Backend (5s polling) → SSE broadcast → Frontend real-time update
+- **Integration Flow**: SSCashout API → Backend (1s polling) → SSE broadcast → Frontend real-time update
 - **Fallback Support**: Still accepts manual velas via POST /api/vela for compatibility
 - **Documentation**: SISTEMA-AUTOMATICO.md explains automatic system architecture
 

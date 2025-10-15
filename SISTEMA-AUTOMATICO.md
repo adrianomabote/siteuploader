@@ -15,9 +15,10 @@ SSCashout API → Backend CashOutFlow → Dashboard (Tempo Real)
 
 ## 🔄 Processo de Atualização
 
-### 1️⃣ **Busca Automática (5 segundos)**
+### 1️⃣ **Busca Automática ULTRA-RÁPIDA (1 segundo)**
 - Servidor faz `GET https://app.sscashout.online/api/velas`
 - Recebe array de velas do SSCashout
+- Atualiza a cada 1 segundo (tempo real!)
 - Exemplo: `[1.75, 336.83, 1.05, 6.37, 2.83, 1.1]`
 
 ### 2️⃣ **Processamento Inteligente**

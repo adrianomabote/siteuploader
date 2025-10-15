@@ -351,13 +351,13 @@ async function buscarVelasSSCashout() {
 function iniciarSistemaAutomatico() {
   console.log("🚀 Sistema 100% Automático ATIVADO!");
   console.log("🌐 Buscando velas de: https://app.sscashout.online/api/velas");
-  console.log("⏱️  Atualização automática a cada 5 segundos");
+  console.log("⚡ Atualização ULTRA-RÁPIDA a cada 1 segundo");
   
   // Buscar imediatamente
   buscarVelasSSCashout();
   
-  // Depois buscar a cada 5 segundos
-  setInterval(buscarVelasSSCashout, 5000);
+  // Depois buscar a cada 1 segundo
+  setInterval(buscarVelasSSCashout, 1000);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
