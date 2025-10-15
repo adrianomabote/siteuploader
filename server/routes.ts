@@ -80,46 +80,51 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
     }
   }
 
-  // 🟣 PADRÃO 1: PREVISÃO DE VELA ROSA (≥10.0x) - Analisa condições favoráveis
-  // Condições: 3+ velas entre 2.5x-8.0x + volatilidade crescente + sem baixas
-  const velasMedioAltas = velas.filter(v => v >= 2.5 && v < 10.0).length;
-  const crescenteProgresso = v4 < v3 && v3 < v2 && v2 < v1; // Progressão ascendente
-  const semBaixas = baixas === 0;
+  // 🟣 PADRÃO 1: PREVISÃO RARA DE 10.00x - Condições MUITO RESTRITIVAS
+  // Apenas quando: 4 velas altas (≥4.0x) + crescente + média ≥5.0x + sem baixas
+  const velasAltas = velas.filter(v => v >= 4.0).length;
+  const crescenteForte = v4 < v3 && v3 < v2 && v2 < v1 && v1 >= 5.0;
   
-  if (velasMedioAltas >= 3 && crescenteProgresso && semBaixas && media >= 3.5) {
-    console.log("🎯 PADRÃO 1: CONDIÇÕES para vela ROSA - Sinal 10.00x");
-    console.log(`   Análise: ${velasMedioAltas} velas médio-altas | Crescente: ${crescenteProgresso} | Média: ${media.toFixed(2)}`);
+  if (velasAltas === 4 && crescenteForte && media >= 5.0 && baixas === 0) {
+    console.log("🎯 PADRÃO 1 (RARO): Condições EXCEPCIONAIS para 10.00x");
+    console.log(`   4 velas altas | Crescente forte | Média: ${media.toFixed(2)}x`);
     return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
   }
 
-  // 🔵 PADRÃO 2: ALTA VOLATILIDADE - Diferença > 5.0x
-  if ((maxima - minima) > 5.0 && baixas <= 1) {
-    console.log("🎯 PADRÃO 2: Alta volatilidade detectada - Sinal 6.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 6.00, max_gales: 1 };
+  // 🔵 PADRÃO 2: PREVISÃO DE 4.00x - Alta volatilidade com velas médias
+  const velasMedioAltas = velas.filter(v => v >= 2.5 && v < 6.0).length;
+  if ((maxima - minima) > 3.0 && velasMedioAltas >= 2 && media >= 2.5 && media < 5.0) {
+    console.log("🎯 PADRÃO 2: Volatilidade favorável - Sinal 4.00x");
+    console.log(`   Diferença: ${(maxima - minima).toFixed(2)} | Média: ${media.toFixed(2)}x`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 4.00, max_gales: 1 };
   }
 
-  // 🔴 PADRÃO 3: 3+ VELAS BAIXAS - Forte indicador
+  // 🔴 PADRÃO 3: PREVISÃO DE 2.00x - 3+ velas baixas (recuperação esperada)
   if (baixas >= 3 && media < 2.0) {
-    console.log("🎯 PADRÃO 3: 3+ velas baixas - Sinal 3.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
+    console.log("🎯 PADRÃO 3: 3+ velas baixas - Sinal 2.00x (recuperação)");
+    console.log(`   Baixas: ${baixas} | Média: ${media.toFixed(2)}x`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 2 };
   }
 
-  // 🟡 PADRÃO 4: MÉDIA BAIXA COM 2+ BAIXAS
-  if (media < 2.5 && baixas >= 2) {
-    console.log("🎯 PADRÃO 4: Média baixa com 2+ baixas - Sinal 2.00x");
+  // 🟡 PADRÃO 4: PREVISÃO DE 2.00x - Média baixa (padrão comum)
+  if (media < 2.0 && baixas >= 2) {
+    console.log("🎯 PADRÃO 4: Média baixa - Sinal 2.00x");
+    console.log(`   Média: ${media.toFixed(2)}x | Baixas: ${baixas}`);
     return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
   }
 
-  // 🟢 PADRÃO 5: SEQUÊNCIA CRESCENTE - Tendência positiva
+  // 🟢 PADRÃO 5: PREVISÃO DE 4.00x - Sequência crescente média/alta
   const crescente = v4 < v3 && v3 < v2 && v2 < v1;
-  if (crescente && media > 2.0 && media < 5.0) {
-    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 3.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 2 };
+  if (crescente && media >= 2.5 && media < 5.0 && baixas === 0) {
+    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 4.00x");
+    console.log(`   Crescente | Média: ${media.toFixed(2)}x | Sem baixas`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 4.00, max_gales: 1 };
   }
 
-  // 🟠 PADRÃO 6: RECUPERAÇÃO APÓS BAIXA - Última vela > 2.5x e anteriores baixas
-  if (v1 >= 2.5 && v1 < 5.0 && baixas >= 2) {
+  // 🟠 PADRÃO 6: PREVISÃO DE 2.00x - Recuperação após período baixo
+  if (v1 >= 2.0 && v1 < 4.0 && baixas >= 2) {
     console.log("🎯 PADRÃO 6: Recuperação detectada - Sinal 2.00x");
+    console.log(`   Última vela: ${v1.toFixed(2)}x | Baixas anteriores: ${baixas}`);
     return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
   }
 
