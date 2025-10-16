@@ -25,14 +25,12 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
           ×
         </button>
 
-        <h2 className="mb-4 text-center text-xl font-bold uppercase tracking-wide text-primary">
-          Aviso Importante
+        <h2 className="mb-4 text-center text-xl font-bold uppercase tracking-wide text-yellow-500">
+          ⚠️ AVISO IMPORTANTE
         </h2>
 
         <p className="mb-6 text-center text-sm leading-relaxed text-muted-foreground">
-          Para utilizar os sinais de forma eficaz, é necessário estar conectado à plataforma de
-          apostas oficial. Caso ainda não possua uma conta, recomendamos o acesso através do botão
-          abaixo para obter as melhores condições de entrada.
+          Para usar o sistema corretamente, é necessário estar conectado à casa de apostas onde o sistema funciona. Caso ainda não possua uma conta, crie a sua através do botão abaixo e garanta o acesso completo ao sistema.
         </p>
 
         <div className="flex gap-3">
@@ -45,10 +43,10 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
           </button>
           <button
             onClick={handleAcessarPlataforma}
-            className="flex-1 rounded-lg bg-primary px-5 py-3.5 text-sm font-semibold uppercase leading-tight text-white transition-colors hover:bg-primary/90"
+            className="flex-1 rounded-lg bg-primary px-5 py-3.5 text-sm font-semibold uppercase text-white transition-colors hover:bg-primary/90"
             data-testid="button-acessar-plataforma"
           >
-            Acessar<br />Plataforma
+            Criar Conta
           </button>
         </div>
       </div>
