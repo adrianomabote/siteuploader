@@ -2,6 +2,9 @@
   if (window.__cashoutInit) return;
   window.__cashoutInit = true;
 
+  // URL externa para obter velas
+  const VELAS_API_URL = "https://app.sscashout.online/api/velas";
+
   const _seenHistory = new Set();
   const MAX_HISTORY = 100;
 
@@ -395,7 +398,7 @@
     });
 
     try {
-      const res = await fetch("/api/velas", { cache: "no-store" });
+      const res = await fetch(VELAS_API_URL, { cache: "no-store" });
       const j = await res.json();
       const arr = Array.isArray(j.valores) ? j.valores
                 : Array.isArray(j.velas)   ? j.velas
@@ -414,7 +417,7 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      const resVelas = await fetch("/api/velas", { cache: "no-store" });
+      const resVelas = await fetch(VELAS_API_URL, { cache: "no-store" });
       const jVelas = await resVelas.json();
       if (jVelas?.ok && Array.isArray(jVelas.velas)) {
         ultimasVelas = jVelas.velas.slice(0, MAX_VELAS);
