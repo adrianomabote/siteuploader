@@ -46,93 +46,83 @@ async function sendPushNotification(title: string, body: string) {
       console.log(`📱 Push enviado: ${title}`);
     } catch (error: any) {
       console.error('❌ Erro ao enviar push:', error);
+      // Se a inscrição expirou ou é inválida, marcar para remoção
       if (error.statusCode === 404 || error.statusCode === 410) {
         deadSubscriptions.push(subscription);
       }
     }
   }
 
+  // Remover inscrições inválidas
   deadSubscriptions.forEach(sub => pushSubscriptions.delete(sub));
 }
 
 
 
-// 📊 PADRÕES PRÉ-DEFINIDOS (ATUALIZADOS: mais comuns e mais numerosos)
-// - A maioria mira 2x ou 3x (com tolerâncias maiores para gerar mais sinais)
-// - Cada padrão tem 'tolerancia' (valor absoluto) e 'minMatchPercent' (quantos itens da sequência precisam bater)
+// 📊 PADRÕES PRÉ-DEFINIDOS
 const PADROES = [
-  // Padrões muito comuns — foco 2x
-  { nome: "Pequena Recuperação", sequencia: [1.2, 1.4, 2.0], cashout: 2.00, tolerancia: 0.45, minMatchPercent: 0.6 },
-  { nome: "Baixa → Média", sequencia: [1.1, 1.6, 1.9], cashout: 2.00, tolerancia: 0.5, minMatchPercent: 0.6 },
-  { nome: "Dois Baixos + Subida", sequencia: [1.3, 1.4, 2.1], cashout: 2.00, tolerancia: 0.4, minMatchPercent: 0.66 },
-  { nome: "Recuperação Lenta", sequencia: [1.05, 1.2, 1.6, 2.0], cashout: 2.00, tolerancia: 0.45, minMatchPercent: 0.6 },
-  { nome: "Alternância Baixa", sequencia: [1.2, 2.0, 1.3], cashout: 2.00, tolerancia: 0.5, minMatchPercent: 0.6 },
-
-  // Padrões médios — foco 3x
-  { nome: "Crescimento Médio Curto", sequencia: [1.6, 2.0, 2.8], cashout: 3.00, tolerancia: 0.6, minMatchPercent: 0.6 },
-  { nome: "Dois Médios Crescentes", sequencia: [2.0, 2.3, 1.9], cashout: 3.00, tolerancia: 0.6, minMatchPercent: 0.66 },
-  { nome: "Subida Rápida Curta", sequencia: [1.8, 2.5, 3.1], cashout: 3.00, tolerancia: 0.7, minMatchPercent: 0.6 },
-  { nome: "Sequência Crescente Média", sequencia: [1.4, 1.9, 2.6, 2.9], cashout: 3.00, tolerancia: 0.6, minMatchPercent: 0.6 },
-
-  // Padrões muito frequentes (micro-picos e alternâncias) — geralmente 2x
-  { nome: "Micro-Pico", sequencia: [1.5, 2.2], cashout: 2.00, tolerancia: 0.5, minMatchPercent: 0.6 },
-  { nome: "Alternância Rápida", sequencia: [1.3, 2.4, 1.5], cashout: 2.00, tolerancia: 0.6, minMatchPercent: 0.6 },
-  { nome: "Repetição Baixa com Spike", sequencia: [1.2, 1.3, 2.3], cashout: 2.00, tolerancia: 0.5, minMatchPercent: 0.6 },
-
-  // Raro — manter 10x como exceção, mas com requisitos muito relaxados (praticamente não usado)
-  { nome: "Raro 10x (exceção)", sequencia: [4.0, 5.0, 8.0], cashout: 10.00, tolerancia: 5.0, minMatchPercent: 0.8 },
+  // 🔵 Padrões de 2x–3x (baixos e médios)
+  { nome: "Zigzag Curto", sequencia: [1.2, 2.1, 1.3], cashout: 2.00, tolerancia: 0.3 },
+  { nome: "Escada Crescente", sequencia: [1.1, 1.4, 1.9], cashout: 2.00, tolerancia: 0.3 },
+  { nome: "Pós-Queda Brusca", sequencia: [1.05, 1.2], cashout: 2.00, tolerancia: 0.2 },
+  { nome: "Dois Baixos Seguidos", sequencia: [1.3, 1.4], cashout: 2.00, tolerancia: 0.2 },
+  { nome: "Alternância Leve", sequencia: [1.5, 2.1, 1.6, 2.5], cashout: 2.00, tolerancia: 0.4 },
+  { nome: "Subida Lenta", sequencia: [1.1, 1.3, 1.6, 2.0], cashout: 2.00, tolerancia: 0.3 },
+  { nome: "Repique Médio", sequencia: [1.9, 1.2, 2.8], cashout: 2.00, tolerancia: 0.4 },
+  { nome: "Curva Alternada", sequencia: [1.3, 2.3, 1.2], cashout: 2.00, tolerancia: 0.3 },
+  
+  // 🟣 Padrões de 3x (médios altos)
+  { nome: "Pré-Pico Médio", sequencia: [1.3, 1.4, 1.6, 3.2], cashout: 3.00, tolerancia: 0.4 },
+  { nome: "Ciclo Médio", sequencia: [2.0, 1.8, 2.5, 1.4], cashout: 3.00, tolerancia: 0.4 },
+  { nome: "Após Três Médios", sequencia: [2.0, 2.3, 2.1], cashout: 3.00, tolerancia: 0.3 },
+  { nome: "Sequência Estável", sequencia: [1.8, 1.9, 2.1, 2.5], cashout: 3.00, tolerancia: 0.3 },
+  { nome: "Repetição Média", sequencia: [2.2, 1.5, 2.0, 1.4], cashout: 3.00, tolerancia: 0.4 },
+  
+  // 💗 Padrões de 10x (altos)
+  { nome: "Sequência Fria Longa", sequencia: [1.2, 1.4, 1.05, 1.7, 1.3], cashout: 10.00, tolerancia: 0.3 },
+  { nome: "Frio Longo", sequencia: [1.1, 1.3, 1.2, 1.4, 1.5], cashout: 10.00, tolerancia: 0.3 },
+  { nome: "Aquecimento Alto", sequencia: [1.5, 2.0, 2.8, 1.9], cashout: 10.00, tolerancia: 0.5 },
 ];
 
 /**
- * 🔍 VERIFICA SE VELAS CORRESPONDEM A UM PADRÃO (VERSÃO RELAXADA)
- * - Permite "partial match" (porcentagem mínima de itens da sequência dentro da tolerância)
+ * 🔍 VERIFICA SE VELAS CORRESPONDEM A UM PADRÃO
  */
 function verificarPadrao(velas: number[], padrao: typeof PADROES[0]): boolean {
   const tamanho = padrao.sequencia.length;
-  if (velas.length < Math.max(3, tamanho)) return false; // exige pelo menos 3 velas para considerarmos a maioria dos padrões
+  if (velas.length < tamanho) return false;
   
-  // Pegar as últimas N velas (ordem: mais recente primeiro)
+  // Pegar as últimas N velas (ordem reversa: mais recente primeiro)
   const velasRecentes = velas.slice(0, tamanho).reverse();
-
-  let matches = 0;
+  
+  // Verificar se cada vela está dentro da tolerância do padrão
   for (let i = 0; i < tamanho; i++) {
     const velaAtual = velasRecentes[i];
     const velaEsperada = padrao.sequencia[i];
     const diferenca = Math.abs(velaAtual - velaEsperada);
-
-    if (diferenca <= padrao.tolerancia) {
-      matches++;
-    } else {
-      // também aceitar se estiver dentro de 15% relativo (para altos valores)
-      const pctDiff = Math.abs(velaAtual - velaEsperada) / Math.max(velaEsperada, 0.0001);
-      if (pctDiff <= 0.15) {
-        matches++;
-      }
+    
+    if (diferenca > padrao.tolerancia) {
+      return false;
     }
   }
-
-  const matchPercent = matches / tamanho;
-  return matchPercent >= (padrao.minMatchPercent ?? 0.6);
+  
+  return true;
 }
 
-// ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - MODO ASSERTIVO (MAIS ATIVO)
+// ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - MODO ASSERTIVO
 function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
-  if (velas.length < 3) return null; // reduzir requisito mínimo para gerar mais sinais
+  if (velas.length < 4) return null;
 
-  // Usar as 4 mais recentes quando possível
-  const [v1 = 1.0, v2 = 1.0, v3 = 1.0, v4 = 1.0] = velas.slice(0, 4);
-  const sliceLen = Math.min(4, velas.length);
-  const media = (velas.slice(0, sliceLen).reduce((a, b) => a + b, 0)) / sliceLen;
+  const [v1, v2, v3, v4] = velas.slice(0, 4);
+  const media = (v1 + v2 + v3 + v4) / 4;
   const maxima = Math.max(...velas);
   const minima = Math.min(...velas);
   const baixas = velas.filter(v => v < 2.0).length;
   const altas = velas.filter(v => v >= 10.0).length;
 
-  // 1) Verificar padrões pré-definidos (mais permissivo)
+  // 🎯 PRIMEIRO: VERIFICAR PADRÕES PRÉ-DEFINIDOS
   for (const padrao of PADROES) {
     if (verificarPadrao(velas, padrao)) {
-      // ajustar gales com mais flexibilidade
-      const gales = padrao.cashout >= 10.00 ? 0 : padrao.cashout === 3.00 ? 1 : 2;
+      const gales = padrao.cashout === 10.00 ? 0 : padrao.cashout === 3.00 ? 1 : 2;
       console.log(`🎯 PADRÃO DETECTADO: "${padrao.nome}" - Sinal ${padrao.cashout}x`);
       console.log(`   Velas: [${velas.slice(0, padrao.sequencia.length).map(v => v.toFixed(2)).join(', ')}]`);
       return { 
@@ -144,60 +134,68 @@ function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: nu
     }
   }
 
-  // BLOQUEIO: reduzir sensibilidade (ex.: só bloquear após 6 velas baixas)
-  if (velas.length >= 6) {
-    const ultimas6 = velas.slice(0, 6);
-    const todas6Baixas = ultimas6.every(v => v < 2.0);
-    if (todas6Baixas) {
-      console.log("⛔ BLOQUEADO: 6 velas baixas consecutivas - aguardando recuperação");
+  // ⛔ BLOQUEIO: 5+ velas baixas consecutivas (proteção)
+  if (velas.length >= 5) {
+    const ultimas5 = velas.slice(0, 5);
+    const todas5Baixas = ultimas5.every(v => v < 2.0);
+    if (todas5Baixas) {
+      console.log("⛔ BLOQUEADO: 5 velas baixas consecutivas - aguardando recuperação");
       return null;
     }
   }
 
-  // FALLBACKS mais permissivos para gerar MAIS sinais (foco em 2x e 3x)
+  // 📊 FALLBACK: Se nenhum padrão foi detectado, usar análise estatística
 
-  // A) Favor sinais 3x quando há duas altas consecutivas ou forte crescimento recente
-  const duasAltasConsecutivas = v1 >= 2.0 && v2 >= 2.0;
-  const duasCrescentes = v2 < v1 && v3 < v2; // rápido crescimento nos últimos 3
-  if ((duasAltasConsecutivas || duasCrescentes) && media >= 1.8 && media < 6.0) {
-    console.log("🎯 FALLBACK A: Duas altas ou crescimento rápido - Sinal 3.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
-  }
-
-  // B) Sinais 2x para recuperações ou micro-spikes (muito comuns)
-  if ((baixas >= 2 && v1 >= 1.5) || (v1 >= 1.6 && v2 < 1.6 && v2 <= v3)) {
-    console.log("🎯 FALLBACK B: Recuperação / Micro-spike - Sinal 2.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 2 };
-  }
-
-  // C) Volatilidade moderada: se range é razoável e média entre 1.8 e 3.5 => 3x
-  if ((maxima - minima) >= 1.0 && media >= 1.8 && media < 3.6) {
-    console.log("🎯 FALLBACK C: Volatilidade moderada - Sinal 3.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
-  }
-
-  // D) Pequena aposta (2x) para sequências de alternância (frequente)
-  const alternancia = (v1 > v2 && v2 < v3) || (v1 < v2 && v2 > v3);
-  if (alternancia && media < 2.5) {
-    console.log("🎯 FALLBACK D: Alternância detectada - Sinal 2.00x");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 2 };
-  }
-
-  // E) Caso muito permissivo para gerar sinais com base na última vela
-  if (v1 >= 1.6 && media >= 1.5) {
-    console.log("🎯 FALLBACK E: Última vela razoável + média aceitável - Sinal 2.00x (maior volume de sinais)");
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 2 };
-  }
-
-  // Pequena exceção para 10x — muito raro e com requisitos altos (permanece como backup)
-  const velasAltas = velas.filter(v => v >= 5.0).length;
-  if (velasAltas >= 3 && media >= 5.0 && (v1 >= 5.0)) {
-    console.log("🎯 PADRÃO MUITO RARO: Condições para 10.00x (exceção)");
+  // 🟣 PADRÃO 1: PREVISÃO RARA DE 10.00x - Condições MUITO RESTRITIVAS
+  // Apenas quando: 4 velas altas (≥4.0x) + crescente + média ≥5.0x + sem baixas
+  const velasAltas = velas.filter(v => v >= 4.0).length;
+  const crescenteForte = v4 < v3 && v3 < v2 && v2 < v1 && v1 >= 5.0;
+  
+  if (velasAltas === 4 && crescenteForte && media >= 5.0 && baixas === 0) {
+    console.log("🎯 PADRÃO 1 (RARO): Condições EXCEPCIONAIS para 10.00x");
+    console.log(`   4 velas altas | Crescente forte | Média: ${media.toFixed(2)}x`);
     return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
   }
 
-  // Nenhum padrão favorável
-  console.log("⚪ Nenhum padrão favorável (após regras mais permissivas) - aguardando oportunidade");
+  // 🔵 PADRÃO 2: PREVISÃO DE 3.00x - Alta volatilidade com velas médias
+  const velasMedioAltas = velas.filter(v => v >= 2.5 && v < 6.0).length;
+  if ((maxima - minima) > 3.0 && velasMedioAltas >= 2 && media >= 2.5 && media < 5.0) {
+    console.log("🎯 PADRÃO 2: Volatilidade favorável - Sinal 3.00x");
+    console.log(`   Diferença: ${(maxima - minima).toFixed(2)} | Média: ${media.toFixed(2)}x`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
+  }
+
+  // 🔴 PADRÃO 3: PREVISÃO DE 2.00x - 3+ velas baixas (recuperação esperada)
+  if (baixas >= 3 && media < 2.0) {
+    console.log("🎯 PADRÃO 3: 3+ velas baixas - Sinal 2.00x (recuperação)");
+    console.log(`   Baixas: ${baixas} | Média: ${media.toFixed(2)}x`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 2 };
+  }
+
+  // 🟡 PADRÃO 4: PREVISÃO DE 2.00x - Média baixa (padrão comum)
+  if (media < 2.0 && baixas >= 2) {
+    console.log("🎯 PADRÃO 4: Média baixa - Sinal 2.00x");
+    console.log(`   Média: ${media.toFixed(2)}x | Baixas: ${baixas}`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
+  }
+
+  // 🟢 PADRÃO 5: PREVISÃO DE 3.00x - Sequência crescente média/alta
+  const crescente = v4 < v3 && v3 < v2 && v2 < v1;
+  if (crescente && media >= 2.5 && media < 5.0 && baixas === 0) {
+    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 3.00x");
+    console.log(`   Crescente | Média: ${media.toFixed(2)}x | Sem baixas`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
+  }
+
+  // 🟠 PADRÃO 6: PREVISÃO DE 2.00x - Recuperação após período baixo
+  if (v1 >= 2.0 && v1 < 4.0 && baixas >= 2) {
+    console.log("🎯 PADRÃO 6: Recuperação detectada - Sinal 2.00x");
+    console.log(`   Última vela: ${v1.toFixed(2)}x | Baixas anteriores: ${baixas}`);
+    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
+  }
+
+  // ⚪ Nenhum padrão favorável detectado
+  console.log("⚪ Nenhum padrão favorável - aguardando oportunidade");
   return null;
 }
 
@@ -225,6 +223,7 @@ function validarComProximaVela(proximaVela: number) {
   const emoji = status === "green" ? "✅" : "❌";
   console.log(`${emoji} RESULTADO: ${status.toUpperCase()} - Vela: ${proximaVela.toFixed(2)}x (Alvo: ${cashoutAlvo.toFixed(2)}x)`);
 
+  // 📱 Notificar resultado
   sendPushNotification(
     `${emoji} RESULTADO: ${status.toUpperCase()}`,
     `Vela: ${proximaVela.toFixed(2)}x | Alvo: ${cashoutAlvo.toFixed(2)}x`
@@ -238,8 +237,8 @@ function iniciarSistemaAviator() {
   console.log("📡 Aguardando velas do script no console do Aviator");
   console.log("⚡ Atualização: A cada nova vela recebida");
   console.log("📍 Endpoint: POST /api/vela");
-  console.log("🤖 Análise automática de padrões: ATIVADA (mais permissiva)");
-  
+  console.log("🤖 Análise automática de padrões: ATIVADA");
+
   if (!servidorSinaisOnline) {
     servidorSinaisOnline = true;
     broadcast("servidor_status", { online: true });
@@ -248,12 +247,15 @@ function iniciarSistemaAviator() {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  // Servir arquivos estáticos da pasta public
   app.use(express.static(path.join(process.cwd(), 'public')));
 
+  // API: Online count
   app.get("/api/online", (req, res) => {
     res.json({ ok: true, online: connectedClients.size });
   });
 
+  // API: SSE Stream
   app.get("/api/stream", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -261,9 +263,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.flushHeaders();
 
     connectedClients.add(res);
+
+    // Enviar contagem inicial
     res.write(`data: ${JSON.stringify({ event: "online", data: { count: connectedClients.size } })}\n\n`);
+
+    // Broadcast para todos sobre novo usuário online
     broadcast("online", { count: connectedClients.size });
 
+    // Heartbeat a cada 30s
     const heartbeat = setInterval(() => {
       res.write(`:heartbeat\n\n`);
     }, 30000);
@@ -275,10 +282,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // API: Obter velas atuais
   app.get("/api/velas", (req, res) => {
     res.json({ ok: true, velas: ultimasVelas });
   });
 
+  // API: Enviar novo sinal (para teste/bot)
   app.post("/api/sinal", express.json(), (req, res) => {
     const { apos_de, cashout, max_gales } = req.body;
     ultimoSinal = { apos_de, cashout, max_gales, ts: new Date().toISOString() };
@@ -286,6 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true });
   });
 
+  // API: Enviar resultado (para teste/bot)
   app.post("/api/resultado", express.json(), (req, res) => {
     const { status, vela_final, id } = req.body;
     ultimoResultado = { 
@@ -306,6 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true });
   });
 
+  // API: Receber sinais do Aviator (enviado pelo código no console)
   app.post("/api/sinais", express.json(), (req, res) => {
     const { rodadas } = req.body;
 
@@ -325,6 +336,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         num = Number(valor);
       }
 
+      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
       if (!isNaN(num) && num >= 1.00) {
         velasProcessadas.push(num);
       } else {
@@ -337,8 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     if (velasProcessadas.length > 0) {
-      // Manter até 6 últimas para análises (mais contexto)
-      ultimasVelas = velasProcessadas.slice(0, 6);
+      ultimasVelas = velasProcessadas.slice(0, 5);
       broadcast("velas", { velas: ultimasVelas });
       console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
 
@@ -351,10 +363,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true });
   });
 
+  // API: Obter sinais do Aviator (para página aviator-sinais.html)
   app.get("/api/sinais-aviator", (req, res) => {
     res.json(ultimasVelas);
   });
 
+  // API: Visualizar velas atuais (GET)
   app.get("/api/vela", (req, res) => {
     res.json({ 
       ok: true, 
@@ -363,6 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // API: Receber velas do script Aviator
   app.post("/api/vela", express.json(), (req, res) => {
     const { valor, valores } = req.body;
 
@@ -372,6 +387,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const velasRejeitadas: number[] = [];
 
       for (const v of velasProcessadas) {
+        // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+        // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
         if (!isNaN(v) && v >= 1.00) {
           velasValidas.push(v);
         } else {
@@ -383,21 +400,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}`);
       }
 
-      if (velasValidas.length >= 3) {
-        // Guardar até 6 velas para contexto
-        ultimasVelas = velasValidas.slice(0, 6);
+      if (velasValidas.length >= 4) {
+        ultimasVelas = velasValidas.slice(0, 4);
 
         broadcast("velas", { velas: ultimasVelas });
         console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
 
         const velaAtual = ultimasVelas[0];
 
+        // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
         if (aguardandoValidacao && velaDoSinal !== null && velaAtual !== velaDoSinal) {
           console.log(`🔍 Nova vela detectada: ${velaAtual.toFixed(2)}x | Validando resultado...`);
           validarComProximaVela(velaAtual);
-        } else if (aguardandoValidacao) {
+        }
+        // 🤖 ANÁLISE AUTOMÁTICA: BLOQUEADO se aguardando validação
+        else if (aguardandoValidacao) {
           console.log(`⏸️ AGUARDANDO validação do sinal anterior (${ultimoSinal?.cashout}x)`);
-        } else {
+        }
+        // ✅ LIVRE PARA GERAR NOVO SINAL
+        else {
           const analise = analisarPadrao(ultimasVelas);
           if (analise && analise.deve_sinalizar) {
             ultimoSinal = {
@@ -413,6 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             broadcast("sinal", ultimoSinal);
 
+            // 📱 Enviar notificação push
             sendPushNotification(
               "🎯 NOVA ENTRADA!",
               `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
@@ -426,18 +448,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else if (valor !== undefined && valor !== null) {
       const velaNum = parseFloat(valor);
 
+      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
+      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
       if (!isNaN(velaNum) && velaNum >= 1.00) {
-        ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 5)];
+        ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
 
         broadcast("velas", { velas: ultimasVelas });
         console.log(`✅ Vela REAL Aviator: ${velaNum.toFixed(2)}x`);
 
+        // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
         if (aguardandoValidacao && velaDoSinal !== null && velaNum !== velaDoSinal) {
           console.log(`🔍 Nova vela detectada: ${velaNum.toFixed(2)}x | Validando resultado...`);
           validarComProximaVela(velaNum);
-        } else if (aguardandoValidacao) {
+        }
+        // 🤖 ANÁLISE AUTOMÁTICA: BLOQUEADO se aguardando validação
+        else if (aguardandoValidacao) {
           console.log(`⏸️ AGUARDANDO validação do sinal anterior (${ultimoSinal?.cashout}x)`);
-        } else {
+        }
+        // ✅ LIVRE PARA GERAR NOVO SINAL
+        else {
           const analise = analisarPadrao(ultimasVelas);
           if (analise && analise.deve_sinalizar) {
             ultimoSinal = {
@@ -453,6 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             broadcast("sinal", ultimoSinal);
 
+            // 📱 Enviar notificação push
             sendPushNotification(
               "🎯 NOVA ENTRADA!",
               `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
@@ -470,7 +500,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true, velas: ultimasVelas });
   });
 
+  // API: Obter último histórico
   app.get("/api/ultimo-historico", (req, res) => {
+    // Só retorna histórico se houver tanto resultado quanto sinal válidos
     if (ultimoResultado && ultimoSinal && ultimoSinal.apos_de && ultimoSinal.cashout) {
       res.json({
         ok: true,
@@ -487,6 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API: Push notification subscription
   app.post("/api/subscribe", express.json(), (req, res) => {
     const subscription = req.body;
     pushSubscriptions.add(subscription);
@@ -494,11 +527,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true });
   });
 
+  // VAPID public key (placeholder - deve ser gerado)
   app.get("/vapidPublicKey.txt", (req, res) => {
     res.type("text/plain");
-    res.send(VAPID_PUBLIC_KEY);
+    res.send("BMryeCT-jm7BXhf_KiZ1YZqcZmBqWqyW3D4uZqRh9b6cJcDXfxXl8qE5uF3yNf0zZi4fE2w1nIvXKJ8L8dYqvCU");
   });
 
+  // Fallback para SPA - todas as outras rotas retornam index.html
   app.get("*", (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
   });
