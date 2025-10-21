@@ -109,7 +109,7 @@
 
     const hora = formatHora ? formatHora(ts) : (ts || new Date().toISOString()).replace("T"," ").slice(11,19);
     const fmtX = (n) => (n === null || n === undefined ? "-" : `${Number(n).toFixed(2)}x`);
-    const statusClass = (status || "").toLowerCase() === "green" ? "green" : "loss";
+    const statusClass = (status || "").toLowerCase() === "green" ? "ganho" : "perda";
     const statusText  = (status || "").toUpperCase();
 
     if (isList) {
@@ -265,7 +265,7 @@
         placarEl.classList.remove("ganho", "perda");
 
         if (st === "ganho") {
-          placarEl.textContent = `GANHO${vf !== null ? " " + vf.toFixed(2) + "x" : ""}`;
+          placarEl.textContent = "GANHO"${vf !== null ? " " + vf.toFixed(2) + "x" : ""}`;
           placarEl.classList.add("ganho");
         } else if (st === "perda") {
           placarEl.textContent = "PERDA";
