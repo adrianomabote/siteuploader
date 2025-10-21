@@ -1,521 +1,443 @@
-import type { Express, Request, Response } from "express";
-import express from "express";
-import { createServer, type Server } from "http";
-import path from "path";
-import webpush from "web-push";
-
-const connectedClients = new Set<Response>();
-let ultimasVelas: number[] = [2.30, 1.89, 1.45, 1.07]; // 4 velas: [0]=2.30 (recente) ... [3]=1.07 (antiga)
-let ultimoSinal: any = null;
-let ultimoResultado: any = null;
-let servidorSinaisOnline = false;
-let sinalAtivo: any = null;
-let aguardandoValidacao: boolean = false;
-let velaDoSinal: number | null = null;
-
-// Armazenar assinaturas push
-const pushSubscriptions = new Set<any>();
-
-// Configurar VAPID keys
-const VAPID_PUBLIC_KEY = "BMkwGe7a_IQ7Y0pG0hTOG93fVkt1yFxd4ir44PNdkeDUfMw_wx1Jl4JFdGZnM2IHB3zDxQNpA-pyNOUiASvHNlU";
-const VAPID_PRIVATE_KEY = "HTi8OFl-uxy3jmnbpRsBvUI1GGf_g4l-xnQMW0_20eE";
-
-webpush.setVapidDetails(
-  'mailto:maboteadriano5@gmail.com',
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
-
-function broadcast(event: string, data: any) {
-  const message = JSON.stringify({ event, data });
-  connectedClients.forEach(client => {
-    client.write(`data: ${message}\n\n`);
-  });
-}
-
-// Enviar notificação push para todos os inscritos
-async function sendPushNotification(title: string, body: string) {
-  const payload = JSON.stringify({ title, body });
-
-  const deadSubscriptions: any[] = [];
-  const subscriptionsArray = Array.from(pushSubscriptions);
-
-  for (const subscription of subscriptionsArray) {
-    try {
-      await webpush.sendNotification(subscription, payload);
-      console.log(`📱 Push enviado: ${title}`);
-    } catch (error: any) {
-      console.error('❌ Erro ao enviar push:', error);
-      // Se a inscrição expirou ou é inválida, marcar para remoção
-      if (error.statusCode === 404 || error.statusCode === 410) {
-        deadSubscriptions.push(subscription);
-      }
-    }
-  }
-
-  // Remover inscrições inválidas
-  deadSubscriptions.forEach(sub => pushSubscriptions.delete(sub));
-}
-
-
-
-/**
- * 🔍 VERIFICA SE VELAS CORRESPONDEM A UM PADRÃO
- */
-function verificarPadrao(velas: number[], padrao: typeof PADROES[0]): boolean {
-  const tamanho = padrao.sequencia.length;
-  if (velas.length < tamanho) return false;
-  
-  // Pegar as últimas N velas (ordem reversa: mais recente primeiro)
-  const velasRecentes = velas.slice(0, tamanho).reverse();
-  
-  // Verificar se cada vela está dentro da tolerância do padrão
-  for (let i = 0; i < tamanho; i++) {
-    const velaAtual = velasRecentes[i];
-    const velaEsperada = padrao.sequencia[i];
-    const diferenca = Math.abs(velaAtual - velaEsperada);
-    
-    if (diferenca > padrao.tolerancia) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-// ✅ ANÁLISE AUTOMÁTICA DE PADRÕES - MODO ASSERTIVO
-function analisarPadrao(velas: number[]): { deve_sinalizar: boolean; apos_de: number; cashout: number; max_gales: number } | null {
-  if (velas.length < 4) return null;
-
-  const [v1, v2, v3, v4] = velas.slice(0, 4);
-  const media = (v1 + v2 + v3 + v4) / 4;
-  const maxima = Math.max(...velas);
-  const minima = Math.min(...velas);
-  const baixas = velas.filter(v => v < 2.0).length;
-  const altas = velas.filter(v => v >= 10.0).length;
-
-  // 🎯 PRIMEIRO: VERIFICAR PADRÕES PRÉ-DEFINIDOS
-  for (const padrao of PADROES) {
-    if (verificarPadrao(velas, padrao)) {
-      const gales = padrao.cashout === 10.00 ? 0 : padrao.cashout === 3.00 ? 1 : 2;
-      console.log(`🎯 PADRÃO DETECTADO: "${padrao.nome}" - Sinal ${padrao.cashout}x`);
-      console.log(`   Velas: [${velas.slice(0, padrao.sequencia.length).map(v => v.toFixed(2)).join(', ')}]`);
-      return { 
-        deve_sinalizar: true, 
-        apos_de: v1, 
-        cashout: padrao.cashout, 
-        max_gales: gales 
-      };
-    }
-  }
-
-  // ⛔ BLOQUEIO: 5+ velas baixas consecutivas (proteção)
-  if (velas.length >= 5) {
-    const ultimas5 = velas.slice(0, 5);
-    const todas5Baixas = ultimas5.every(v => v < 2.0);
-    if (todas5Baixas) {
-      console.log("⛔ BLOQUEADO: 5 velas baixas consecutivas - aguardando recuperação");
-      return null;
-    }
-  }
-
-  // 📊 FALLBACK: Se nenhum padrão foi detectado, usar análise estatística
-
-  // 🟣 PADRÃO 1: PREVISÃO RARA DE 10.00x - Condições MUITO RESTRITIVAS
-  // Apenas quando: 4 velas altas (≥4.0x) + crescente + média ≥5.0x + sem baixas
-  const velasAltas = velas.filter(v => v >= 4.0).length;
-  const crescenteForte = v4 < v3 && v3 < v2 && v2 < v1 && v1 >= 5.0;
-  
-  if (velasAltas === 4 && crescenteForte && media >= 5.0 && baixas === 0) {
-    console.log("🎯 PADRÃO 1 (RARO): Condições EXCEPCIONAIS para 10.00x");
-    console.log(`   4 velas altas | Crescente forte | Média: ${media.toFixed(2)}x`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 10.00, max_gales: 0 };
-  }
-
-  // 🔵 PADRÃO 2: PREVISÃO DE 3.00x - Alta volatilidade com velas médias
-  const velasMedioAltas = velas.filter(v => v >= 2.5 && v < 6.0).length;
-  if ((maxima - minima) > 3.0 && velasMedioAltas >= 2 && media >= 2.5 && media < 5.0) {
-    console.log("🎯 PADRÃO 2: Volatilidade favorável - Sinal 3.00x");
-    console.log(`   Diferença: ${(maxima - minima).toFixed(2)} | Média: ${media.toFixed(2)}x`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
-  }
-
-  // 🔴 PADRÃO 3: PREVISÃO DE 2.00x - 3+ velas baixas (recuperação esperada)
-  if (baixas >= 3 && media < 2.0) {
-    console.log("🎯 PADRÃO 3: 3+ velas baixas - Sinal 2.00x (recuperação)");
-    console.log(`   Baixas: ${baixas} | Média: ${media.toFixed(2)}x`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 2 };
-  }
-
-  // 🟡 PADRÃO 4: PREVISÃO DE 2.00x - Média baixa (padrão comum)
-  if (media < 2.0 && baixas >= 2) {
-    console.log("🎯 PADRÃO 4: Média baixa - Sinal 2.00x");
-    console.log(`   Média: ${media.toFixed(2)}x | Baixas: ${baixas}`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
-  }
-
-  // 🟢 PADRÃO 5: PREVISÃO DE 3.00x - Sequência crescente média/alta
-  const crescente = v4 < v3 && v3 < v2 && v2 < v1;
-  if (crescente && media >= 2.5 && media < 5.0 && baixas === 0) {
-    console.log("🎯 PADRÃO 5: Sequência crescente - Sinal 3.00x");
-    console.log(`   Crescente | Média: ${media.toFixed(2)}x | Sem baixas`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 3.00, max_gales: 1 };
-  }
-
-  // 🟠 PADRÃO 6: PREVISÃO DE 2.00x - Recuperação após período baixo
-  if (v1 >= 2.0 && v1 < 4.0 && baixas >= 2) {
-    console.log("🎯 PADRÃO 6: Recuperação detectada - Sinal 2.00x");
-    console.log(`   Última vela: ${v1.toFixed(2)}x | Baixas anteriores: ${baixas}`);
-    return { deve_sinalizar: true, apos_de: v1, cashout: 2.00, max_gales: 1 };
-  }
-
-  // ⚪ Nenhum padrão favorável detectado
-  console.log("⚪ Nenhum padrão favorável - aguardando oportunidade");
-  return null;
-}
-
-// 🎯 VALIDAÇÃO AUTOMÁTICA: Verifica próxima vela
-function validarComProximaVela(proximaVela: number) {
-  if (!ultimoSinal || !aguardandoValidacao) return;
-
-  const cashoutAlvo = ultimoSinal.cashout;
-  const status = proximaVela >= cashoutAlvo ? "green" : "loss";
-
-  ultimoResultado = {
-    status,
-    vela_final: proximaVela,
-    id: ultimoSinal.id,
-    ts: new Date().toISOString(),
-    apos_de: ultimoSinal.apos_de,
-    cashout: cashoutAlvo
-  };
-
-  aguardandoValidacao = false;
-  velaDoSinal = null;
-
-  broadcast("resultado", ultimoResultado);
-
-  const emoji = status === "green" ? "✅" : "❌";
-  console.log(`${emoji} RESULTADO: ${status.toUpperCase()} - Vela: ${proximaVela.toFixed(2)}x (Alvo: ${cashoutAlvo.toFixed(2)}x)`);
-
-  // 📱 Notificar resultado
-  sendPushNotification(
-    `${emoji} RESULTADO: ${status.toUpperCase()}`,
-    `Vela: ${proximaVela.toFixed(2)}x | Alvo: ${cashoutAlvo.toFixed(2)}x`
-  );
-}
-
-
-// Sistema de recebimento de velas do Aviator (via script console)
-function iniciarSistemaAviator() {
-  console.log("🚀 Sistema de Captura Aviator ATIVADO!");
-  console.log("📡 Aguardando velas do script no console do Aviator");
-  console.log("⚡ Atualização: A cada nova vela recebida");
-  console.log("📍 Endpoint: POST /api/vela");
-  console.log("🤖 Análise automática de padrões: ATIVADA");
-
-  if (!servidorSinaisOnline) {
-    servidorSinaisOnline = true;
-    broadcast("servidor_status", { online: true });
-  }
-}
-
-export async function registerRoutes(app: Express): Promise<Server> {
-
-  // Servir arquivos estáticos da pasta public
-  app.use(express.static(path.join(process.cwd(), 'public')));
-
-  // API: Online count
-  app.get("/api/online", (req, res) => {
-    res.json({ ok: true, online: connectedClients.size });
-  });
-
-  // API: SSE Stream
-  app.get("/api/stream", (req: Request, res: Response) => {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
-
-    connectedClients.add(res);
-
-    // Enviar contagem inicial
-    res.write(`data: ${JSON.stringify({ event: "online", data: { count: connectedClients.size } })}\n\n`);
-
-    // Broadcast para todos sobre novo usuário online
-    broadcast("online", { count: connectedClients.size });
-
-    // Heartbeat a cada 30s
-    const heartbeat = setInterval(() => {
-      res.write(`:heartbeat\n\n`);
-    }, 30000);
-
-    req.on("close", () => {
-      clearInterval(heartbeat);
-      connectedClients.delete(res);
-      broadcast("online", { count: connectedClients.size });
-    });
-  });
-
-  // API: Obter velas atuais
-  app.get("/api/velas", (req, res) => {
-    res.json({ ok: true, velas: ultimasVelas });
-  });
-
-  // API: Enviar novo sinal (para teste/bot)
-  app.post("/api/sinal", express.json(), (req, res) => {
-    const { apos_de, cashout, max_gales } = req.body;
-    ultimoSinal = { apos_de, cashout, max_gales, ts: new Date().toISOString() };
-    broadcast("sinal", ultimoSinal);
-    res.json({ ok: true });
-  });
-
-  // API: Enviar resultado (para teste/bot)
-  app.post("/api/resultado", express.json(), (req, res) => {
-    const { status, vela_final, id } = req.body;
-    ultimoResultado = { 
-      status, 
-      vela_final, 
-      id: id || Date.now().toString(),
-      ts: new Date().toISOString(),
-      apos_de: ultimoSinal?.apos_de,
-      cashout: ultimoSinal?.cashout
-    };
-    aguardandoValidacao = false;
-    velaDoSinal = null;
-    broadcast("resultado", ultimoResultado);
-
-    const emoji = status === "green" ? "✅" : "❌";
-    console.log(`${emoji} RESULTADO MANUAL: ${status.toUpperCase()}`);
-
-    res.json({ ok: true });
-  });
-
-  // API: Receber sinais do Aviator (enviado pelo código no console)
-  app.post("/api/sinais", express.json(), (req, res) => {
-    const { rodadas } = req.body;
-
-    if (!Array.isArray(rodadas)) {
-      return res.status(400).json({ ok: false, error: "Formato inválido" });
-    }
-
-    const velasProcessadas: number[] = [];
-    const velasRejeitadas: number[] = [];
-
-    for (const valor of rodadas) {
-      let num: number;
-
-      if (typeof valor === 'string') {
-        num = parseFloat(valor.replace('x', ''));
-      } else {
-        num = Number(valor);
-      }
-
-      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
-      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
-      if (!isNaN(num) && num >= 1.00) {
-        velasProcessadas.push(num);
-      } else {
-        velasRejeitadas.push(num);
-      }
-    }
-
-    if (velasRejeitadas.length > 0) {
-      console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}]`);
-    }
-
-    if (velasProcessadas.length > 0) {
-      ultimasVelas = velasProcessadas.slice(0, 5);
-      broadcast("velas", { velas: ultimasVelas });
-      console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-
-      if (!servidorSinaisOnline) {
-        servidorSinaisOnline = true;
-        broadcast("servidor_status", { online: true });
-      }
-    }
-
-    res.json({ ok: true });
-  });
-
-  // API: Obter sinais do Aviator (para página aviator-sinais.html)
-  app.get("/api/sinais-aviator", (req, res) => {
-    res.json(ultimasVelas);
-  });
-
-  // API: Visualizar velas atuais (GET)
-  app.get("/api/vela", (req, res) => {
-    res.json({ 
-      ok: true, 
-      velas: ultimasVelas.slice(0, 4),
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // API: Receber velas do script Aviator
-  app.post("/api/vela", express.json(), (req, res) => {
-    const { valor, valores } = req.body;
-
-    if (valores && Array.isArray(valores)) {
-      const velasProcessadas = valores.map((v: any) => parseFloat(v));
-      const velasValidas: number[] = [];
-      const velasRejeitadas: number[] = [];
-
-      for (const v of velasProcessadas) {
-        // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
-        // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
-        if (!isNaN(v) && v >= 1.00) {
-          velasValidas.push(v);
-        } else {
-          velasRejeitadas.push(v);
-        }
-      }
-
-      if (velasRejeitadas.length > 0) {
-        console.log(`❌ Velas FALSAS rejeitadas: [${velasRejeitadas.map(v => isNaN(v) ? 'NaN/inválido' : v.toFixed(2)).join(', ')}`);
-      }
-
-      if (velasValidas.length >= 4) {
-        ultimasVelas = velasValidas.slice(0, 4);
-
-        broadcast("velas", { velas: ultimasVelas });
-        console.log(`✅ Velas REAIS Aviator: [${ultimasVelas.map(v => v.toFixed(2)).join(', ')}]`);
-
-        const velaAtual = ultimasVelas[0];
-
-        // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
-        if (aguardandoValidacao && velaDoSinal !== null && velaAtual !== velaDoSinal) {
-          console.log(`🔍 Nova vela detectada: ${velaAtual.toFixed(2)}x | Validando resultado...`);
-          validarComProximaVela(velaAtual);
-        }
-        // 🤖 ANÁLISE AUTOMÁTICA: BLOQUEADO se aguardando validação
-        else if (aguardandoValidacao) {
-          console.log(`⏸️ AGUARDANDO validação do sinal anterior (${ultimoSinal?.cashout}x)`);
-        }
-        // ✅ LIVRE PARA GERAR NOVO SINAL
-        else {
-          const analise = analisarPadrao(ultimasVelas);
-          if (analise && analise.deve_sinalizar) {
-            ultimoSinal = {
-              id: `sinal_${Date.now()}`,
-              apos_de: analise.apos_de,
-              cashout: analise.cashout,
-              max_gales: analise.max_gales,
-              ts: new Date().toISOString()
-            };
-
-            aguardandoValidacao = true;
-            velaDoSinal = velaAtual;
-
-            broadcast("sinal", ultimoSinal);
-
-            // 📱 Enviar notificação push
-            sendPushNotification(
-              "🎯 NOVA ENTRADA!",
-              `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
-            );
-
-            console.log(`🚀 SINAL GERADO: ${analise.apos_de.toFixed(2)}x → ${analise.cashout.toFixed(2)}x (${analise.max_gales} gales)`);
-            console.log(`⏳ Aguardando próxima vela para validação...`);
-          }
-        }
-      }
-    } else if (valor !== undefined && valor !== null) {
-      const velaNum = parseFloat(valor);
-
-      // ✅ FILTRO INTELIGENTE: Rejeita apenas velas FALSAS (NaN, undefined, < 1.00)
-      // ✅ ACEITA: Qualquer vela >= 1.00x (incluindo altas: 100x, 200x, 500x...)
-      if (!isNaN(velaNum) && velaNum >= 1.00) {
-        ultimasVelas = [velaNum, ...ultimasVelas.slice(0, 3)];
-
-        broadcast("velas", { velas: ultimasVelas });
-        console.log(`✅ Vela REAL Aviator: ${velaNum.toFixed(2)}x`);
-
-        // 🎯 SE ESTÁ AGUARDANDO VALIDAÇÃO: Verifica se a nova vela valida o resultado
-        if (aguardandoValidacao && velaDoSinal !== null && velaNum !== velaDoSinal) {
-          console.log(`🔍 Nova vela detectada: ${velaNum.toFixed(2)}x | Validando resultado...`);
-          validarComProximaVela(velaNum);
-        }
-        // 🤖 ANÁLISE AUTOMÁTICA: BLOQUEADO se aguardando validação
-        else if (aguardandoValidacao) {
-          console.log(`⏸️ AGUARDANDO validação do sinal anterior (${ultimoSinal?.cashout}x)`);
-        }
-        // ✅ LIVRE PARA GERAR NOVO SINAL
-        else {
-          const analise = analisarPadrao(ultimasVelas);
-          if (analise && analise.deve_sinalizar) {
-            ultimoSinal = {
-              id: `sinal_${Date.now()}`,
-              apos_de: analise.apos_de,
-              cashout: analise.cashout,
-              max_gales: analise.max_gales,
-              ts: new Date().toISOString()
-            };
-
-            aguardandoValidacao = true;
-            velaDoSinal = velaNum;
-
-            broadcast("sinal", ultimoSinal);
-
-            // 📱 Enviar notificação push
-            sendPushNotification(
-              "🎯 NOVA ENTRADA!",
-              `Entrar após ${analise.apos_de.toFixed(2)}x | Sair em ${analise.cashout.toFixed(2)}x`
-            );
-
-            console.log(`🚀 SINAL GERADO: ${analise.apos_de.toFixed(2)}x → ${analise.cashout.toFixed(2)}x (${analise.max_gales} gales)`);
-            console.log(`⏳ Aguardando próxima vela para validação...`);
-          }
-        }
-      } else {
-        console.log(`❌ Vela FALSA rejeitada: ${isNaN(velaNum) ? 'NaN/inválido' : velaNum.toFixed(2)}x (< 1.00)`);
-      }
-    }
-
-    res.json({ ok: true, velas: ultimasVelas });
-  });
-
-  // API: Obter último histórico
-  app.get("/api/ultimo-historico", (req, res) => {
-    // Só retorna histórico se houver tanto resultado quanto sinal válidos
-    if (ultimoResultado && ultimoSinal && ultimoSinal.apos_de && ultimoSinal.cashout) {
-      res.json({
-        ok: true,
-        data: {
-          ts: ultimoResultado.ts,
-          status: ultimoResultado.status,
-          vela_final: ultimoResultado.vela_final,
-          apos_de: ultimoSinal.apos_de,
-          cashout: ultimoSinal.cashout
-        }
-      });
+(() => {
+  if (window.__cashoutInit) return;
+  window.__cashoutInit = true;
+
+  const _seenHistory = new Set();
+  const MAX_HISTORY = 100;
+
+  function _resultKey(d) {
+    const id = (d.id ?? "").toString();
+    const st = (d.status ?? "").toString().toLowerCase();
+    let vf = d.vela_final;
+    if (vf !== null && vf !== undefined && String(vf).trim() !== "" && !isNaN(Number(vf))) {
+      vf = Number(vf).toFixed(2);
     } else {
-      res.json({ ok: false });
+      vf = "";
+    }
+    return `${id}|${st}|${vf}`;
+  }
+
+  const $ = (sel) => document.querySelector(sel);
+  const setText = (sel, val) => { const el = $(sel); if (el) el.textContent = val; };
+  const asNum = (v) => {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim();
+    if (!s || s === "-") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+  const fmtX = (n) => (n === null ? "-" : `${Number(n).toFixed(2)}x`);
+
+  function urlBase64ToUint8Array(base64String) {
+    const s = base64String.replace(/[\s"']/g, "").replace(/[\u200B-\u200D\uFEFF]/g, "");
+    const padding = "=".repeat((4 - s.length % 4) % 4);
+    const base64 = (s + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(base64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  function getClientId() {
+    let cid = localStorage.getItem("cid");
+    if (!cid) {
+      cid = (crypto.randomUUID && crypto.randomUUID()) ||
+            (Date.now().toString(36) + Math.random().toString(36).slice(2));
+      localStorage.setItem("cid", cid);
+    }
+    return cid;
+  }
+
+  function formatHora(ts) {
+    const d = ts ? new Date(ts) : new Date();
+    return d.toLocaleTimeString("pt-PT", {
+      timeZone: "Africa/Johannesburg",
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+
+  function setStatus(online) {
+    const pill = document.querySelector("[data-status='realtime']");
+    if (pill) {
+      pill.classList.toggle("bg-green-600", online);
+      pill.classList.toggle("bg-yellow-600", !online);
+    }
+
+    const subtitle = document.querySelector("[data-subtitle='connection']");
+    if (subtitle) subtitle.textContent = online ? "Aguarde entrada" : "Conectando ...";
+  }
+
+  const MAX_VELAS = 5;
+  let ultimasVelas = [];
+  let analyzingTimer = null;
+
+  const elVelas = document.getElementById("velas");
+  const elVelasStatus = document.getElementById("velas-status");
+
+  function setAnalyzing() {
+    const el = document.getElementById("velas-status");
+    if (!el) return;
+    el.classList.add("analisando");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => setAnalyzing(true));
+
+  function renderVelas(arr) {
+    if (!elVelas) return;
+    const list = (arr || []).slice(0, MAX_VELAS);
+    elVelas.innerHTML = list
+      .map((v) => {
+        const n = Number(v);
+        const txt = Number.isFinite(n) ? n.toFixed(2) + "x" : "-";
+        const isRed = Number.isFinite(n) && n < 2;
+        const fg = isRed ? "#ff5c5c" : "#36d27a";
+        return `<li class="vela-pill" style="color:${fg}">${txt}</li>`;
+      })
+      .join("");
+  }
+
+  function addHistoricoLinha({ ts, status, apos_de, cashout, vela_final, key }) {
+    let target = document.querySelector(".history[data-table='historico']");
+    const isList = !!target;
+    if (!target) target = document.getElementById("history-body");
+    if (!target) return;
+
+    if (key && isList && target.querySelector(`li[data-key="${key}"]`)) return;
+
+    const hora = formatHora ? formatHora(ts) : (ts || new Date().toISOString()).replace("T"," ").slice(11,19);
+    const fmtX = (n) => (n === null || n === undefined ? "-" : `${Number(n).toFixed(2)}x`);
+    const statusClass = (status || "").toLowerCase() === "green" ? "green" : "loss";
+    const statusText  = (status || "").toUpperCase();
+
+    if (isList) {
+      const li = document.createElement("li");
+      if (key) li.dataset.key = key;
+      li.dataset.status = (status || "").toLowerCase();
+      li.innerHTML = `
+        <div class="time">${hora}</div>
+        <div class="meta">
+          <span class="chip">Apos: ${fmtX(apos_de)}</span>
+          <span class="chip">Cash: ${fmtX(cashout)}</span>
+          <span class="chip">Vela: ${fmtX(vela_final)}</span>
+        </div>
+        <div class="badge pill ${statusClass}">${statusText}</div>
+      `;
+      target.prepend(li);
+
+      const maxRows = 50;
+      while (target.children.length > maxRows) target.removeChild(target.lastElementChild);
+    } else {
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-status", (status || "").toLowerCase());
+      tr.innerHTML = `
+        <td>${hora}</td>
+        <td>${fmtX(apos_de)}</td>
+        <td>${fmtX(cashout)}</td>
+        <td class="${statusClass}">${statusText}</td>
+        <td>${fmtX(vela_final)}</td>
+        <td></td>
+      `;
+      target.prepend(tr);
+      const maxRows = 50;
+      while (target.rows && target.rows.length > maxRows) target.deleteRow(-1);
+    }
+  }
+
+  let es = null, reconnectAttempts = 0, heartbeatTimer = null;
+  const MAX_BACKOFF = 15000;
+
+  function resetHeartbeat() {
+    clearTimeout(heartbeatTimer);
+    heartbeatTimer = setTimeout(() => {
+      try { es && es.close(); } catch (_) {}
+      setStatus(false);
+      connectSSE();
+    }, 150000); // 2.5 minutos - reduz reconexões desnecessárias
+  }
+
+  let lastSignal = null;
+
+  function handleEvent(msg) {
+    if (!msg || !msg.event) return;
+
+    if (msg.event === "vela" || msg.event === "velas") {
+      const d = msg.data || {};
+
+      let serie = null;
+      if (Array.isArray(d.valores)) serie = d.valores;
+      else if (Array.isArray(d.velas)) serie = d.velas;
+
+      if (serie) {
+        let arr = serie.map(Number).filter(Number.isFinite);
+
+        if (ultimasVelas.length && arr.length) {
+          const head = ultimasVelas[0];
+          const firstMatch = Math.abs(arr[0] - head) < 1e-9;
+          const lastMatch  = Math.abs(arr[arr.length - 1] - head) < 1e-9;
+          if (!firstMatch && lastMatch) {
+            arr.reverse();
+          }
+        } else {
+          arr.reverse();
+        }
+
+        ultimasVelas = arr.slice(0, MAX_VELAS);
+        renderVelas(ultimasVelas);
+        setAnalyzing(ultimasVelas.length === 0);
+        return;
+      }
+
+      const unit = d.valor ?? d.vela ?? d.value ?? d.v;
+      const n = Number(unit);
+      if (Number.isFinite(n)) {
+        ultimasVelas.unshift(n);
+        ultimasVelas = ultimasVelas.slice(0, MAX_VELAS);
+        renderVelas(ultimasVelas);
+        setAnalyzing(false);
+      }
+      return;
+    }
+
+    if (msg.event === "servidor_status") {
+      const d = msg.data || {};
+      const statusEl = document.getElementById("velas-status");
+      if (statusEl) {
+        if (d.online) {
+          statusEl.textContent = "Analisando velas";
+          statusEl.classList.remove("servidor-offline");
+        } else {
+          statusEl.textContent = "Aguardando servidor de sinais";
+          statusEl.classList.add("servidor-offline");
+        }
+      }
+      return;
+    }
+
+    if (msg.event === "sinal") {
+      const d = msg.data || {};
+      const apos = asNum(d.apos_de);
+      const cash = asNum(d.cashout);
+      const gales = asNum(d.max_gales);
+
+      setText("[data-field='apos_de']", fmtX(apos));
+      setText("[data-field='cashout']", fmtX(cash));
+
+      const galeEl = document.querySelector("[data-field='max_gales']");
+      if (galeEl) {
+        if (gales === null) {
+          galeEl.textContent = "-";
+        } else {
+          const galeFmt = `<br>${gales} ${gales === 1 ? "vez" : ""}`;
+          galeEl.innerHTML = galeFmt;
+        }
+      }
+
+      const placarEl = document.querySelector("[data-field='placar']");
+      if (placarEl) {
+        placarEl.classList.remove("ganhou", "perdeu");
+        placarEl.textContent = "Aguardando…";
+      }
+
+      lastSignal = { apos_de: apos, cashout: cash, ts: d.ts || new Date().toISOString() };
+      return;
+    }
+
+    if (msg.event === "resultado") {
+      const d = msg.data || {};
+      const st = String(d.status || "").toLowerCase();
+      const vf = asNum(d.vela_final);
+
+      const key = _resultKey(d);
+      if (_seenHistory.has(key)) {
+        return;
+      }
+      _seenHistory.add(key);
+      if (_seenHistory.size > MAX_HISTORY) {
+        const first = _seenHistory.values().next().value;
+        _seenHistory.delete(first);
+      }
+
+      const placarEl = document.querySelector("[data-field='placar']");
+      if (placarEl) {
+        placarEl.classList.remove("ganhou", "perdeu");
+
+        if (st === "ganhou") {
+          placarEl.textContent = `GANHOU${vf !== null ? " " + vf.toFixed(2) + "x" : ""}`;
+          placarEl.classList.add("ganhou");
+        } else if (st === "loss") {
+          placarEl.textContent = "PERDEU";
+          placarEl.classList.add("perdeu");
+        } else {
+          placarEl.textContent = "Aguardando…";
+        }
+      }
+
+      addHistoricoLinha({
+        ts: d.ts || new Date().toISOString(),
+        status: st,
+        apos_de: lastSignal?.apos_de ?? null,
+        cashout: lastSignal?.cashout ?? null,
+        vela_final: vf,
+        key
+      });
+      return;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const r = await fetch("/api/online", { cache: "no-store" });
+      const j = await r.json();
+      const el = document.getElementById("onlineCount");
+      if (j?.ok && el) el.textContent = `• ${j.online} online`;
+    } catch {}
+  });
+
+  function connectSSE() {
+    try { es && es.close(); } catch (_) {}
+    const cid = getClientId();
+    es = new EventSource("/api/stream?cid=" + encodeURIComponent(cid) + "&v=" + Date.now());
+
+    es.onopen = () => {
+      setStatus(true);
+      reconnectAttempts = 0;
+      resetHeartbeat();
+      if (!ultimasVelas.length) setAnalyzing(true);
+    };
+
+    es.onmessage = (ev) => {
+      resetHeartbeat();
+      if (!ev.data) return;
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+
+      if (msg?.event === "online") {
+        const n = msg.data?.count ?? null;
+        const el = document.getElementById("onlineCount");
+        if (el && n !== null) el.textContent = `• ${n} online`;
+        return;
+      }
+
+      handleEvent(msg);
+    };
+
+    es.onerror = () => {
+      setStatus(false);
+      try { es && es.close(); } catch (_) {}
+      const backoff = Math.min(1000 * Math.pow(2, reconnectAttempts++), MAX_BACKOFF);
+      setTimeout(connectSSE, backoff);
+    };
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") connectSSE();
+  });
+
+  async function activatePush() {
+    try {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        alert("Push não é suportado neste navegador.");
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        alert("Permita notificações para ativar o Push.");
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+
+      let vapid = (await (await fetch("/vapidPublicKey.txt", { cache: "no-store" })).text()).trim();
+      vapid = vapid.replace(/[\s"']/g, "").replace(/[\u200B-\u200D\uFEFF]/g, "");
+      const appServerKey = urlBase64ToUint8Array(vapid);
+      if (appServerKey.length !== 65) {
+        alert("Chave VAPID inválida no front. Recarregue a página.");
+        return;
+      }
+
+      const old = await reg.pushManager.getSubscription();
+      if (old) { try { await old.unsubscribe(); } catch {} }
+
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appServerKey });
+
+      const resp = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      await resp.json();
+      alert("Push ativado com sucesso!");
+    } catch (e) {
+      alert("Falha ao ativar Push: " + e);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const btnPush = document.querySelector("[data-action='ativar-push'], #btnAtivarPush, button#ativarPush");
+    if (btnPush) btnPush.addEventListener("click", activatePush);
+
+    const cta = document.getElementById("cta-ativar-push");
+    if (cta) cta.addEventListener("click", activatePush);
+
+    document.querySelectorAll(".filters .chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filters .chip").forEach(b => b.removeAttribute("aria-pressed"));
+        btn.setAttribute("aria-pressed", "true");
+        const f = btn.dataset.filter;
+        document.querySelectorAll(".history li").forEach(li => {
+          li.style.display = (f === "all" || li.dataset.status === f) ? "" : "none";
+        });
+      });
+    });
+
+    try {
+      const res = await fetch("/api/velas", { cache: "no-store" });
+      const j = await res.json();
+      const arr = Array.isArray(j.valores) ? j.valores
+                : Array.isArray(j.velas)   ? j.velas
+                : [];
+      if (arr.length) {
+        ultimasVelas = arr.slice(0, MAX_VELAS);
+        renderVelas(ultimasVelas);
+        setAnalyzing(false);
+      } else {
+        setAnalyzing(true);
+      }
+    } catch {
+      setAnalyzing(true);
     }
   });
 
-  // API: Push notification subscription
-  app.post("/api/subscribe", express.json(), (req, res) => {
-    const subscription = req.body;
-    pushSubscriptions.add(subscription);
-    console.log(`✅ Push subscription adicionada! Total: ${pushSubscriptions.size}`);
-    res.json({ ok: true });
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const resVelas = await fetch("/api/velas", { cache: "no-store" });
+      const jVelas = await resVelas.json();
+      if (jVelas?.ok && Array.isArray(jVelas.velas)) {
+        ultimasVelas = jVelas.velas.slice(0, MAX_VELAS);
+        renderVelas(ultimasVelas);
+      }
+
+      const resHist = await fetch("/api/ultimo-historico", { cache: "no-store" });
+      const jHist = await resHist.json();
+      if (jHist?.ok && jHist.data) {
+        const d = jHist.data;
+        const toNum = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+        addHistoricoLinha({
+          ts: d.ts,
+          status: d.status,
+          apos_de: toNum(d.apos_de),
+          cashout: toNum(d.cashout),
+          vela_final: toNum(d.vela_final),
+        });
+      }
+    } catch (e) {
+      console.warn("Bootstrap data load error:", e);
+    }
   });
 
-  // VAPID public key (placeholder - deve ser gerado)
-  app.get("/vapidPublicKey.txt", (req, res) => {
-    res.type("text/plain");
-    res.send("BMryeCT-jm7BXhf_KiZ1YZqcZmBqWqyW3D4uZqRh9b6cJcDXfxXl8qE5uF3yNf0zZi4fE2w1nIvXKJ8L8dYqvCU");
-  });
-
-  // Fallback para SPA - todas as outras rotas retornam index.html
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
-  });
-
-  const httpServer = createServer(app);
-
-  iniciarSistemaAviator();
-
-  return httpServer;
-}
+  connectSSE();
+})();
