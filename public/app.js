@@ -267,7 +267,7 @@
         if (st === "ganho") {
           placarEl.textContent = `GANHO${vf !== null ? " " + vf.toFixed(2) + "x" : ""}`;
           placarEl.classList.add("ganho");
-        } else if (st === "perda") {
+        } else if (st === "loss") {
           placarEl.textContent = "PERDA";
           placarEl.classList.add("perda");
         } else {
