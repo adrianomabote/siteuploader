@@ -1,6 +1,6 @@
 interface EntradaCardProps {
   placar: string;
-  placarStatus: "green" | "loss" | "waiting";
+  placarStatus: "ganho" | "perda" | "waiting";
   aposDe: string;
   cashout: string;
   gales: string;
@@ -18,8 +18,8 @@ export default function EntradaCard({
   onAtivarPush,
 }: EntradaCardProps) {
   const getPlacarClass = () => {
-    if (placarStatus === "green") return "bg-primary/20 text-primary border-primary/30";
-    if (placarStatus === "loss") return "bg-red-500/20 text-red-500 border-red-500/30";
+    if (placarStatus === "ganho") return "bg-primary/20 text-primary border-primary/30";
+    if (placarStatus === "perda") return "bg-red-500/20 text-red-500 border-red-500/30";
     return "bg-muted/20 text-muted-foreground border-muted/30";
   };
 
