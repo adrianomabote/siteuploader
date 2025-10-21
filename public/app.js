@@ -237,7 +237,7 @@
 
       const placarEl = document.querySelector("[data-field='placar']");
       if (placarEl) {
-        placarEl.classList.remove("ganhou", "perdeu");
+        placarEl.classList.remove("ganho", "perda");
         placarEl.textContent = "Aguardando…";
       }
 
@@ -262,14 +262,14 @@
 
       const placarEl = document.querySelector("[data-field='placar']");
       if (placarEl) {
-        placarEl.classList.remove("ganhou", "perdeu");
+        placarEl.classList.remove("ganho", "perda");
 
-        if (st === "ganhou") {
-          placarEl.textContent = `GANHOU${vf !== null ? " " + vf.toFixed(2) + "x" : ""}`;
-          placarEl.classList.add("ganhou");
-        } else if (st === "loss") {
-          placarEl.textContent = "PERDEU";
-          placarEl.classList.add("perdeu");
+        if (st === "ganho") {
+          placarEl.textContent = `GANHO${vf !== null ? " " + vf.toFixed(2) + "x" : ""}`;
+          placarEl.classList.add("ganho");
+        } else if (st === "perda") {
+          placarEl.textContent = "PERDA";
+          placarEl.classList.add("perda");
         } else {
           placarEl.textContent = "Aguardando…";
         }
