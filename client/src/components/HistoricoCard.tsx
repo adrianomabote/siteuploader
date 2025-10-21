@@ -6,7 +6,7 @@ export interface HistoricoItem {
   aposDe: string;
   cashout: string;
   vela: string;
-  status: "green" | "loss";
+  status: "ganho" | "perda";
 }
 
 interface HistoricoCardProps {
@@ -14,7 +14,7 @@ interface HistoricoCardProps {
 }
 
 export default function HistoricoCard({ items }: HistoricoCardProps) {
-  const [filter, setFilter] = useState<"all" | "green" | "loss">("all");
+  const [filter, setFilter] = useState<"all" | "ganho" | "perda">("all");
 
   const filteredItems = items.filter((item) => {
     if (filter === "all") return true;
@@ -40,26 +40,26 @@ export default function HistoricoCard({ items }: HistoricoCardProps) {
             Tudo
           </button>
           <button
-            onClick={() => setFilter("green")}
+            onClick={() => setFilter("ganho")}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
               filter === "green"
                 ? "bg-primary/20 text-primary"
                 : "bg-muted/20 text-muted-foreground hover:bg-muted/30"
             }`}
-            data-testid="filter-green"
+            data-testid="filter-ganho"
           >
-            Green
+            Ganho
           </button>
           <button
-            onClick={() => setFilter("loss")}
+            onClick={() => setFilter("ganho")}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
               filter === "loss"
                 ? "bg-primary/20 text-primary"
                 : "bg-muted/20 text-muted-foreground hover:bg-muted/30"
             }`}
-            data-testid="filter-loss"
+            data-testid="filter-perda"
           >
-            Loss
+            perda
           </button>
         </div>
       </div>
@@ -69,13 +69,13 @@ export default function HistoricoCard({ items }: HistoricoCardProps) {
           <li
             key={item.id}
             className={`rounded-full px-1 py-0.5 text-[9px] font-bold whitespace-nowrap text-center flex-shrink-0 min-w-[45px] ${
-              item.status === "green"
+              item.status === "ganho"
                 ? "bg-primary/20 text-primary"
                 : "bg-red-500/20 text-red-500"
             }`}
             data-testid={`historico-${item.id}`}
           >
-            {item.status === "green" ? "✅" : "❌"}
+            {item.status === "ganho" ? "✅" : "❌"}
           </li>
         ))}
       </ul>
