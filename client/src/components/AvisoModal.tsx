@@ -32,7 +32,7 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
         <p className="mb-6 text-center text-sm leading-relaxed text-muted-foreground">
           Para usar o sistema corretamente, é necessário estar conectado à casa de apostas onde o sistema funciona. Caso ainda não possua uma conta, crie a sua através do botão abaixo e garanta o acesso completo ao sistema.
         </p>
-        {/* Atualizado: 2025-10-16 */}
+        {/* Atualizado: 2025-10-21 */}
 
         <div className="flex gap-3">
           <button
