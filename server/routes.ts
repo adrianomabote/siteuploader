@@ -62,20 +62,12 @@ async function sendPushNotification(title: string, body: string) {
 // 📊 PADRÕES PRÉ-DEFINIDOS
 const PADROES = [
   // 🔵 Padrões de 2x–3x (baixos e médios)
-  { nome: "Zigzag Curto", sequencia: [1.2, 2.1, 1.3], cashout: 2.00, tolerancia: 0.3 },
-  { nome: "Escada Crescente", sequencia: [1.1, 1.4, 1.9], cashout: 2.00, tolerancia: 0.3 },
-  { nome: "Pós-Queda Brusca", sequencia: [1.05, 1.2], cashout: 2.00, tolerancia: 0.2 },
-  { nome: "Dois Baixos Seguidos", sequencia: [1.3, 1.4], cashout: 2.00, tolerancia: 0.2 },
   { nome: "Alternância Leve", sequencia: [1.5, 2.1, 1.6, 2.5], cashout: 2.00, tolerancia: 0.4 },
   { nome: "Subida Lenta", sequencia: [1.1, 1.3, 1.6, 2.0], cashout: 2.00, tolerancia: 0.3 },
-  { nome: "Repique Médio", sequencia: [1.9, 1.2, 2.8], cashout: 2.00, tolerancia: 0.4 },
-  { nome: "Curva Alternada", sequencia: [1.3, 2.3, 1.2], cashout: 2.00, tolerancia: 0.3 },
   
   // 🟣 Padrões de 3x (médios altos)
   { nome: "Pré-Pico Médio", sequencia: [1.3, 1.4, 1.6, 3.2], cashout: 3.00, tolerancia: 0.4 },
   { nome: "Ciclo Médio", sequencia: [2.0, 1.8, 2.5, 1.4], cashout: 3.00, tolerancia: 0.4 },
-  { nome: "Após Três Médios", sequencia: [2.0, 2.3, 2.1], cashout: 3.00, tolerancia: 0.3 },
-  { nome: "Sequência Estável", sequencia: [1.8, 1.9, 2.1, 2.5], cashout: 3.00, tolerancia: 0.3 },
   { nome: "Repetição Média", sequencia: [2.2, 1.5, 2.0, 1.4], cashout: 3.00, tolerancia: 0.4 },
   
   // 💗 Padrões de 10x (altos)
