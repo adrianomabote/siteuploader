@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => setAnalyzing(true));
       try { es && es.close(); } catch (_) {}
       setStatus(false);
       connectSSE();
-    }, 5000);
+    }, 45000); // 45s (maior que os 30s do heartbeat do servidor)
   }
 
   // Guarda o último sinal para anexar no resultado
