@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => setAnalyzing(true));
       try { es && es.close(); } catch (_) {}
       setStatus(false);
       connectSSE();
-    }, 5000);
+    }, 40000);
   }
 
   // Guarda o último sinal para anexar no resultado
@@ -403,8 +403,7 @@ if (msg.event === "resultado") {
 
   function connectSSE() {
     try { es && es.close(); } catch (_) {}
-    const cid = getClientId();
-    es = new EventSource("/api/stream?cid=" + encodeURIComponent(cid) + "&v=" + Date.now());
+    es = new EventSource("/api/stream?v=" + Date.now());
 
     es.onopen = () => {
       setStatus(true);
