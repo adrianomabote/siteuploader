@@ -23,3 +23,6 @@ args = "npm run dev"
 build = ["sh", "-c", "rm -rf dist node_modules/.vite && npm install && npm run build"]
 run = ["sh", "-c", "npm start"]
 deploymentTarget = "cloudrun"
+
+[agent]
+expertMode = true
