@@ -5,7 +5,6 @@ import path from "path";
 import webpush from "web-push";
 
 const connectedClients = new Set<Response>();
-const uniqueClientIds = new Map<string, Set<Response>>();
 let ultimasVelas: number[] = [2.30, 1.89, 1.45, 1.07]; // 4 velas: [0]=2.30 (recente) ... [3]=1.07 (antiga)
 let ultimoSinal: any = null;
 let ultimoResultado: any = null;
@@ -245,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API: Online count
   app.get("/api/online", (req, res) => {
-    res.json({ ok: true, online: uniqueClientIds.size });
+    res.json({ ok: true, online: connectedClients.size });
   });
 
   // API: SSE Stream
@@ -255,20 +254,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
-    const clientId = (req.query.cid as string) || `client_${Date.now()}_${Math.random()}`;
-    
     connectedClients.add(res);
-    
-    if (!uniqueClientIds.has(clientId)) {
-      uniqueClientIds.set(clientId, new Set());
-    }
-    uniqueClientIds.get(clientId)!.add(res);
 
     // Enviar contagem inicial
-    res.write(`data: ${JSON.stringify({ event: "online", data: { count: uniqueClientIds.size } })}\n\n`);
+    res.write(`data: ${JSON.stringify({ event: "online", data: { count: connectedClients.size } })}\n\n`);
 
     // Broadcast para todos sobre usuários online
-    broadcast("online", { count: uniqueClientIds.size });
+    broadcast("online", { count: connectedClients.size });
 
     // Heartbeat a cada 30s
     const heartbeat = setInterval(() => {
@@ -278,16 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.on("close", () => {
       clearInterval(heartbeat);
       connectedClients.delete(res);
-      
-      const connections = uniqueClientIds.get(clientId);
-      if (connections) {
-        connections.delete(res);
-        if (connections.size === 0) {
-          uniqueClientIds.delete(clientId);
-        }
-      }
-      
-      broadcast("online", { count: uniqueClientIds.size });
+      broadcast("online", { count: connectedClients.size });
     });
   });
 
