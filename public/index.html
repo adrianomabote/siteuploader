@@ -249,6 +249,26 @@
         </div>
       </div>
       
+      <div id="botPremiumModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%); border: 3px solid #ef4444; border-radius: 16px; padding: 28px; max-width: 400px; width: 90%; position: relative;">
+          <button onclick="closeBotPremiumModal()" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1;">×</button>
+          
+          <h2 style="color: #22c55e; text-align: center; font-size: 20px; font-weight: 700; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 1px;">BOT AVIATOR 100% ACERTO*</h2>
+          
+          <p style="color: #ffffff; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">Pare de usar a versão gratuita e ative agora a versão paga do Bot Aviator.</p>
+          
+          <p style="color: #ffffff; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">Com a versão premium, você terá acesso aos sinais com 100% de acerto, mostrando exatamente onde o Aviator vai cair.</p>
+          
+          <p style="color: #ffffff; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0;">Garanta já a sua vantagem exclusiva por <span style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 4px 12px; border-radius: 6px; font-weight: 700;">450 MT</span> e comece a faturar.</p>
+          
+          <div style="display: flex; gap: 12px; justify-content: space-between;">
+            <button onclick="closeBotPremiumModal()" style="flex: 1; background-color: #4b5563; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#374151'" onmouseout="this.style.backgroundColor='#4b5563'">DEPOIS</button>
+            
+            <button onclick="closeBotPremiumModal(); window.open('https://robo-cyber-hacker.onrender.com/', '_blank')" style="flex: 1; background-color: #ef4444; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#dc2626'" onmouseout="this.style.backgroundColor='#ef4444'">VER AGORA</button>
+          </div>
+        </div>
+      </div>
+      
       <script>
         var currentModal = 'aviso';
         var modalTimer = null;
@@ -265,6 +285,14 @@
           document.getElementById('whatsappModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
           modalTimer = setTimeout(function() {
+            showBotPremiumModal();
+          }, 40000);
+        }
+        
+        function closeBotPremiumModal() {
+          document.getElementById('botPremiumModal').style.display = 'none';
+          if (modalTimer) clearTimeout(modalTimer);
+          modalTimer = setTimeout(function() {
             showAvisoModal();
           }, 180000);
         }
@@ -278,6 +306,13 @@
         
         function showWhatsappModal() {
           var modal = document.getElementById('whatsappModal');
+          if (modal) {
+            modal.style.display = 'flex';
+          }
+        }
+        
+        function showBotPremiumModal() {
+          var modal = document.getElementById('botPremiumModal');
           if (modal) {
             modal.style.display = 'flex';
           }
