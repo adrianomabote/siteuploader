@@ -440,7 +440,11 @@ if (msg.event === "resultado") {
   }
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") connectSSE();
+    if (document.visibilityState === "visible") {
+      if (!es || es.readyState === EventSource.CLOSED) {
+        connectSSE();
+      }
+    }
   });
 
   // -------------------- Push: ativação --------------------

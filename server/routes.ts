@@ -5,7 +5,7 @@ import path from "path";
 import webpush from "web-push";
 
 const connectedClients = new Set<Response>();
-const uniqueClientIds = new Map<string, number>();
+const uniqueClientIds = new Map<string, NodeJS.Timeout>();
 let ultimasVelas: number[] = [2.30, 1.89, 1.45, 1.07]; // 4 velas: [0]=2.30 (recente) ... [3]=1.07 (antiga)
 let ultimoSinal: any = null;
 let ultimoResultado: any = null;
@@ -259,14 +259,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     connectedClients.add(res);
     
-    const currentCount = uniqueClientIds.get(clientId) || 0;
-    uniqueClientIds.set(clientId, currentCount + 1);
+    const existingTimeout = uniqueClientIds.get(clientId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    } else {
+      broadcast("online", { count: uniqueClientIds.size + 1 });
+    }
+    uniqueClientIds.set(clientId, null as any);
 
     // Enviar contagem inicial
     res.write(`data: ${JSON.stringify({ event: "online", data: { count: uniqueClientIds.size } })}\n\n`);
-
-    // Broadcast para todos sobre novo usuário online
-    broadcast("online", { count: uniqueClientIds.size });
 
     // Heartbeat a cada 30s
     const heartbeat = setInterval(() => {
@@ -277,14 +279,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       clearInterval(heartbeat);
       connectedClients.delete(res);
       
-      const count = uniqueClientIds.get(clientId) || 0;
-      if (count <= 1) {
+      const timeout = setTimeout(() => {
         uniqueClientIds.delete(clientId);
-      } else {
-        uniqueClientIds.set(clientId, count - 1);
-      }
+        broadcast("online", { count: uniqueClientIds.size });
+      }, 10000);
       
-      broadcast("online", { count: uniqueClientIds.size });
+      uniqueClientIds.set(clientId, timeout);
     });
   });
 
