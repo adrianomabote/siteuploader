@@ -8,10 +8,6 @@ packages = ["unzip"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 32913
-externalPort = 3000
-
 [workflows]
 runButton = "Project"
 
@@ -38,9 +34,9 @@ waitForPort = 5000
 outputType = "webview"
 
 [deployment]
-build = ["sh", "-c", "rm -rf dist node_modules/.vite && npm install && npm run build"]
-run = ["sh", "-c", "npm start"]
-deploymentTarget = "cloudrun"
+build = ["npm", "run", "build"]
+run = ["npm", "start"]
+deploymentTarget = "autoscale"
 
 [agent]
 expertMode = true
