@@ -5,6 +5,7 @@ import EntradaCard from "@/components/EntradaCard";
 import HistoricoCard, { type HistoricoItem } from "@/components/HistoricoCard";
 import AvisoModal from "@/components/AvisoModal";
 import WhatsAppModal from "@/components/WhatsAppModal";
+import BotPremiumModal from "@/components/BotPremiumModal";
 import CTAPush from "@/components/CTAPush";
 
 export default function Home() {
@@ -117,6 +118,7 @@ export default function Home() {
   
   const [showAvisoModal, setShowAvisoModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [showBotPremiumModal, setShowBotPremiumModal] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowAvisoModal(true), 10000);
@@ -130,6 +132,11 @@ export default function Home() {
 
   const handleCloseWhatsAppModal = () => {
     setShowWhatsAppModal(false);
+    setTimeout(() => setShowBotPremiumModal(true), 40000);
+  };
+
+  const handleCloseBotPremiumModal = () => {
+    setShowBotPremiumModal(false);
     setTimeout(() => setShowAvisoModal(true), 180000);
   };
 
@@ -170,6 +177,7 @@ export default function Home() {
 
         <AvisoModal isOpen={showAvisoModal} onClose={handleCloseAvisoModal} />
         <WhatsAppModal isOpen={showWhatsAppModal} onClose={handleCloseWhatsAppModal} />
+        <BotPremiumModal isOpen={showBotPremiumModal} onClose={handleCloseBotPremiumModal} />
         
         <footer className="mt-6 pb-4 text-center">
           <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5" data-testid="text-footer-credits">
