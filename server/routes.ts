@@ -5,6 +5,7 @@ import path from "path";
 import webpush from "web-push";
 
 const connectedClients = new Set<Response>();
+const uniqueUsers = new Set<string>(); // ANTI: Nunca remove, só conta usuários únicos
 let ultimasVelas: number[] = [2.30, 1.89, 1.45, 1.07]; // 4 velas: [0]=2.30 (recente) ... [3]=1.07 (antiga)
 let ultimoSinal: any = null;
 let ultimoResultado: any = null;
@@ -242,25 +243,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Servir arquivos estáticos da pasta public
   app.use(express.static(path.join(process.cwd(), 'public')));
 
-  // API: Online count
+  // API: Online count (ANTI: Nunca diminui, só conta usuários únicos)
   app.get("/api/online", (req, res) => {
-    res.json({ ok: true, online: connectedClients.size });
+    res.json({ ok: true, online: uniqueUsers.size });
   });
 
-  // API: SSE Stream
+  // API: SSE Stream (ANTI: clientId persiste, contador nunca diminui)
   app.get("/api/stream", (req: Request, res: Response) => {
+    const clientId = req.query.clientId as string || "unknown";
+    
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
     connectedClients.add(res);
+    
+    // ANTI: Adiciona clientId ao Set (nunca remove, só adiciona uma vez)
+    const isNewUser = !uniqueUsers.has(clientId);
+    uniqueUsers.add(clientId);
 
-    // Enviar contagem inicial
-    res.write(`data: ${JSON.stringify({ event: "online", data: { count: connectedClients.size } })}\n\n`);
+    // Enviar contagem inicial (sempre uniqueUsers.size)
+    res.write(`data: ${JSON.stringify({ event: "online", data: { count: uniqueUsers.size } })}\n\n`);
 
-    // Broadcast para todos sobre usuários online
-    broadcast("online", { count: connectedClients.size });
+    // Broadcast para todos sobre usuários online (com contador que nunca diminui)
+    if (isNewUser) {
+      broadcast("online", { count: uniqueUsers.size });
+    }
 
     // Heartbeat a cada 30s
     const heartbeat = setInterval(() => {
@@ -270,7 +279,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.on("close", () => {
       clearInterval(heartbeat);
       connectedClients.delete(res);
-      broadcast("online", { count: connectedClients.size });
+      // ANTI: NÃO remove de uniqueUsers (ele nunca diminui)
+      // Não faz broadcast aqui (contador não muda)
     });
   });
 

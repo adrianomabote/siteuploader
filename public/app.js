@@ -403,7 +403,8 @@ if (msg.event === "resultado") {
 
   function connectSSE() {
     try { es && es.close(); } catch (_) {}
-    es = new EventSource("/api/stream?v=" + Date.now());
+    const clientId = getClientId();
+    es = new EventSource("/api/stream?v=" + Date.now() + "&clientId=" + encodeURIComponent(clientId));
 
     es.onopen = () => {
       setStatus(true);
