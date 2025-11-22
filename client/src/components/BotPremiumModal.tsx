@@ -16,7 +16,7 @@ export default function BotPremiumModal({ isOpen, onClose }: BotPremiumModalProp
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
       data-testid="modal-bot-premium"
     >
-      <div className="relative mx-4 w-full max-w-md rounded-2xl border-[3px] border-red-500 bg-gradient-to-br from-[#1a2332] to-[#0f1419] p-7">
+      <div className="relative mx-4 w-full max-w-md rounded-2xl border-[3px] border-red-700 bg-gradient-to-br from-[#1a2332] to-[#0f1419] p-7">
         <button
           onClick={onClose}
           className="absolute right-3 top-3 text-2xl leading-none text-muted-foreground transition-colors hover:text-foreground"
@@ -39,7 +39,7 @@ export default function BotPremiumModal({ isOpen, onClose }: BotPremiumModalProp
 
         <p className="mb-6 text-center text-sm leading-relaxed text-white">
           Garanta já a sua vantagem exclusiva por{" "}
-          <span className="inline-block rounded-md bg-red-500 px-3 py-1 font-bold text-white">
+          <span className="inline-block rounded-md bg-red-700 px-3 py-1 font-bold text-white">
             450 MT
           </span>{" "}
           e comece a faturar.
@@ -55,7 +55,7 @@ export default function BotPremiumModal({ isOpen, onClose }: BotPremiumModalProp
           </button>
           <button
             onClick={handleAtivarAgora}
-            className="flex-1 rounded-lg bg-red-500 px-5 py-3.5 text-sm font-semibold uppercase text-white transition-colors hover:bg-red-600"
+            className="flex-1 rounded-lg bg-red-700 px-5 py-3.5 text-sm font-semibold uppercase text-white transition-colors hover:bg-red-800"
             data-testid="button-ativar-bot-premium"
           >
             Ver Agora
