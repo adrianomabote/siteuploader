@@ -212,6 +212,18 @@
         </div>
       </div>
       
+      <style>
+        @keyframes heartbeat {
+          0% { transform: scale(1); }
+          14% { transform: scale(1.05); }
+          28% { transform: scale(1); }
+          42% { transform: scale(1.05); }
+          70% { transform: scale(1); }
+        }
+        .btn-heartbeat {
+          animation: heartbeat 1.5s ease-in-out infinite !important;
+        }
+      </style>
       <div id="whatsappModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
         <div style="background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 28px; max-width: 400px; width: 90%; position: relative;">
           <button onclick="closeWhatsappModal()" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1;">×</button>
@@ -222,7 +234,7 @@
           
           <p style="color: #d1d5db; text-align: center; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0;">No grupo você encontra tudo o que precisa para ganhar no Aviator todos os dias com segurança.</p>
           
-          <button onclick="closeWhatsappModal(); window.open('https://chat.whatsapp.com/BqAAbfMWDKa9ft0GR7Oxai', '_blank')" style="width: 100%; background-color: #22c55e; color: #ffffff; border: none; border-radius: 8px; padding: 16px 20px; font-size: 15px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: all 0.2s; letter-spacing: 0.5px;" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">ENTRAR NO GRUPO AGORA</button>
+          <button onclick="closeWhatsappModal(); window.open('https://chat.whatsapp.com/BqAAbfMWDKa9ft0GR7Oxai', '_blank')" class="btn-heartbeat" style="width: 100%; background-color: #22c55e; color: #ffffff; border: none; border-radius: 8px; padding: 16px 20px; font-size: 15px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: all 0.2s; letter-spacing: 0.5px; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">ENTRAR NO GRUPO AGORA</button>
         </div>
       </div>
       
@@ -254,7 +266,7 @@
           document.getElementById('avisoModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
           modalTimer = setTimeout(function() {
-            showWhatsappModal();
+            showBotPremiumModal();
           }, 40000);
         }
         
@@ -262,7 +274,7 @@
           document.getElementById('whatsappModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
           modalTimer = setTimeout(function() {
-            showBotPremiumModal();
+            showAvisoModal();
           }, 40000);
         }
         
@@ -270,7 +282,7 @@
           document.getElementById('botPremiumModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
           modalTimer = setTimeout(function() {
-            showAvisoModal();
+            showWhatsappModal();
           }, 180000);
         }
         
@@ -296,7 +308,7 @@
         }
         
         setTimeout(function() {
-          showAvisoModal();
+          showWhatsappModal();
         }, 10000);
         
         function colorirVelas() {

@@ -41,7 +41,7 @@ export default function WhatsAppModal({ isOpen, onClose }: WhatsAppModalProps) {
 
         <button
           onClick={handleEntrarGrupo}
-          className="w-full rounded-lg bg-primary px-5 py-4 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-primary/90"
+          className="w-full rounded-lg bg-primary px-5 py-4 text-sm font-bold uppercase tracking-wide text-white transition-all hover:bg-primary/90 animate-heartbeat shadow-lg shadow-primary/30"
           data-testid="button-entrar-grupo"
         >
           Entrar no Grupo

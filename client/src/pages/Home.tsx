@@ -121,23 +121,23 @@ export default function Home() {
   const [showBotPremiumModal, setShowBotPremiumModal] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowAvisoModal(true), 10000);
+    const timer = setTimeout(() => setShowWhatsAppModal(true), 10000);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleCloseAvisoModal = () => {
-    setShowAvisoModal(false);
-    setTimeout(() => setShowWhatsAppModal(true), 40000);
-  };
-
   const handleCloseWhatsAppModal = () => {
     setShowWhatsAppModal(false);
+    setTimeout(() => setShowAvisoModal(true), 40000);
+  };
+
+  const handleCloseAvisoModal = () => {
+    setShowAvisoModal(false);
     setTimeout(() => setShowBotPremiumModal(true), 40000);
   };
 
   const handleCloseBotPremiumModal = () => {
     setShowBotPremiumModal(false);
-    setTimeout(() => setShowAvisoModal(true), 180000);
+    setTimeout(() => setShowWhatsAppModal(true), 180000);
   };
 
   const handleAtivarPush = () => {
