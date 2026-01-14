@@ -173,6 +173,16 @@ export default function Home() {
           <HistoricoCard items={historico} />
 
           <CTAPush onAtivar={handleAtivarPush} />
+          
+          <div className="w-full h-[600px] mt-4 rounded-md overflow-hidden border border-border">
+            <iframe 
+              src="https://go.aff.oddsbest.co/3iaj17cv" 
+              className="w-full h-full border-0"
+              title="OddsBest"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </main>
 
         <AvisoModal isOpen={showAvisoModal} onClose={handleCloseAvisoModal} />
