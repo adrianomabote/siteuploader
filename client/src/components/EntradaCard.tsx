@@ -37,22 +37,22 @@ export default function EntradaCard({
         </span>
       </div>
 
-      <div className="mb-3 grid grid-cols-3 gap-2">
-        <div className="flex flex-col">
-          <span className="mb-0.5 text-xs text-muted-foreground">Depois de</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground" data-testid="text-apos-de">
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <div className="flex flex-col flex-1">
+          <span className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Depois de</span>
+          <span className="text-base sm:text-lg font-bold text-foreground" data-testid="text-apos-de">
             {aposDe}
           </span>
         </div>
-        <div className="flex flex-col">
-          <span className="mb-0.5 text-xs text-muted-foreground">Tirar no:</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground" data-testid="text-cashout">
+        <div className="flex flex-col flex-1 border-x border-border/50 px-4 text-center">
+          <span className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Tirar no:</span>
+          <span className="text-base sm:text-lg font-bold text-foreground" data-testid="text-cashout">
             {cashout}
           </span>
         </div>
-        <div className="flex flex-col">
-          <span className="mb-0.5 text-xs text-muted-foreground">Gale's</span>
-          <span className="text-lg sm:text-xl font-bold text-foreground" data-testid="text-gales">
+        <div className="flex flex-col flex-1 text-right">
+          <span className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Tentativas</span>
+          <span className="text-base sm:text-lg font-bold text-foreground" data-testid="text-gales">
             {gales}
           </span>
         </div>
