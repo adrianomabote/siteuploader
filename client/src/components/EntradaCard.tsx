@@ -69,13 +69,6 @@ export default function EntradaCard({
         >
           Apostar
         </a>
-        <button
-          onClick={onAtivarPush}
-          className="flex-1 rounded-lg bg-yellow-600 px-3 py-3 text-sm sm:text-base font-bold text-white transition-colors hover:bg-yellow-700"
-          data-testid="button-ativar-push"
-        >
-          Ativar Alerta
-        </button>
       </div>
     </div>
   );

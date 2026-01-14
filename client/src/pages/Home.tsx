@@ -170,10 +170,6 @@ export default function Home() {
             onAtivarPush={handleAtivarPush}
           />
 
-          <HistoricoCard items={historico} />
-
-          <CTAPush onAtivar={handleAtivarPush} />
-          
           <div className="w-full h-[600px] mt-4 rounded-md overflow-hidden border border-border">
             <iframe 
               src="https://go.aff.oddsbest.co/3iaj17cv" 
