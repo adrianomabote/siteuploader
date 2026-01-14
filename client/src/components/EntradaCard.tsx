@@ -24,36 +24,36 @@ export default function EntradaCard({
   };
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-card to-card/80 p-2">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-foreground" data-testid="text-entrada-title">
-          Sinal Confirmado
+    <div className="rounded-2xl border border-white/5 bg-[#121821] p-4 shadow-xl">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="text-xl font-bold tracking-tight text-[#94a3b8]" data-testid="text-entrada-title">
+          Entrada confirmada
         </h2>
         <span
-          className={`rounded-full border px-3 py-1 text-sm font-bold ${getPlacarClass()}`}
+          className="rounded-full bg-[#1e293b]/50 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white/90"
           data-testid="text-placar"
         >
-          {placar}
+          {placarStatus === "waiting" ? "AGUARDANDO..." : placar}
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-col flex-1">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Depois de</span>
-          <span className="text-lg font-bold text-foreground" data-testid="text-apos-de">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col rounded-xl bg-[#1e293b]/30 p-3 border border-white/5">
+          <span className="mb-1 text-[11px] font-medium text-[#64748b]">Depois de</span>
+          <span className="text-xl font-black text-white tracking-tight" data-testid="text-apos-de">
             {aposDe}
           </span>
         </div>
-        <div className="flex flex-col flex-1 border-x border-border/30 px-2 text-center">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tirar no:</span>
-          <span className="text-lg font-bold text-foreground" data-testid="text-cashout">
+        <div className="flex flex-col rounded-xl bg-[#1e293b]/30 p-3 border border-white/5">
+          <span className="mb-1 text-[11px] font-medium text-[#64748b]">Cashout</span>
+          <span className="text-xl font-black text-white tracking-tight" data-testid="text-cashout">
             {cashout}
           </span>
         </div>
-        <div className="flex flex-col flex-1 text-right">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tentativas</span>
-          <span className="text-lg font-bold text-foreground" data-testid="text-gales">
-            {gales}
+        <div className="flex flex-col rounded-xl bg-[#1e293b]/30 p-3 border border-white/5">
+          <span className="mb-1 text-[11px] font-medium text-[#64748b]">Gale's</span>
+          <span className="text-xl font-black text-white tracking-tight" data-testid="text-gales">
+            {gales === "--" ? "--" : `${gales} vezes`}
           </span>
         </div>
       </div>
