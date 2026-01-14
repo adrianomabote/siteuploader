@@ -30,10 +30,10 @@ export default function EntradaCard({
           Entrada confirmada
         </h2>
         <span
-          className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider ${getPlacarClass()}`}
+          className={`rounded-full border px-3 py-1.5 text-sm sm:text-base font-semibold ${getPlacarClass()}`}
           data-testid="text-placar"
         >
-          {placarStatus === "waiting" ? "AGUARDANDO..." : placar}
+          {placar}
         </span>
       </div>
 
