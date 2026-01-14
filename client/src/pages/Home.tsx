@@ -170,7 +170,7 @@ export default function Home() {
             onAtivarPush={handleAtivarPush}
           />
 
-          <div className="w-full h-[800px] mt-4 rounded-md overflow-hidden border border-border">
+          <div className="w-full h-[800px] mt-4 rounded-md overflow-hidden border border-primary/50">
             <iframe 
               src="https://go.aff.oddsbest.co/3iaj17cv" 
               className="w-full h-full border-0"
