@@ -185,12 +185,10 @@ export default function Home() {
         <WhatsAppModal isOpen={showWhatsAppModal} onClose={handleCloseWhatsAppModal} />
         <BotPremiumModal isOpen={showBotPremiumModal} onClose={handleCloseBotPremiumModal} />
         
-        <footer className="mt-6 pb-4 text-center">
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5" data-testid="text-footer-credits">
-            <span className="text-xs">🖥️</span>
+        <footer className="mt-2 pb-2 text-center">
+          <p className="text-[9px] text-muted-foreground/60 flex items-center justify-center gap-1" data-testid="text-footer-credits">
             <span>Sistema desenvolvido por</span>
-            <span className="text-primary font-bold">CYBER HACKER OFFICE</span>
-            <span className="text-xs">🔒</span>
+            <span className="text-primary/70 font-semibold">CYBER HACKER OFFICE</span>
           </p>
         </footer>
       </div>
