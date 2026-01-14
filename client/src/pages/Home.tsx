@@ -186,9 +186,9 @@ export default function Home() {
         <BotPremiumModal isOpen={showBotPremiumModal} onClose={handleCloseBotPremiumModal} />
         
         <footer className="mt-2 pb-2 text-center">
-          <p className="text-[9px] text-muted-foreground/60 flex items-center justify-center gap-1" data-testid="text-footer-credits">
+          <p className="text-[11px] text-muted-foreground/80 flex items-center justify-center gap-1.5 font-medium" data-testid="text-footer-credits">
             <span>Sistema desenvolvido por</span>
-            <span className="text-primary/70 font-semibold">CYBER HACKER OFFICE</span>
+            <span className="text-primary font-bold">CYBER HACKER OFFICE</span>
           </p>
         </footer>
       </div>

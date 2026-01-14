@@ -24,13 +24,13 @@ export default function EntradaCard({
   };
 
   return (
-    <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-card to-card/80 p-3 shadow-xl">
+    <div className="rounded-2xl border-2 border-primary bg-gradient-to-br from-card to-card/80 p-3 shadow-xl">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-xl font-bold text-foreground" data-testid="text-entrada-title">
           Entrada confirmada
         </h2>
         <span
-          className={`rounded-full border px-3 py-1.5 text-sm font-semibold uppercase tracking-wider ${getPlacarClass()}`}
+          className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider ${getPlacarClass()}`}
           data-testid="text-placar"
         >
           {placarStatus === "waiting" ? "AGUARDANDO..." : placar}
@@ -45,13 +45,13 @@ export default function EntradaCard({
           </span>
         </div>
         <div className="flex flex-col rounded-xl bg-muted/20 p-2 border border-muted/10">
-          <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Cashout</span>
+          <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Tirar no:</span>
           <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-cashout">
             {cashout}
           </span>
         </div>
         <div className="flex flex-col rounded-xl bg-muted/20 p-2 border border-muted/10">
-          <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Gale's</span>
+          <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Tentativas</span>
           <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-gales">
             {gales === "--" ? "--" : `${gales} vezes`}
           </span>

@@ -8,13 +8,11 @@ export default function AppBar({ connectionStatus, isOnline, onlineCount }: AppB
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card px-4 py-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="h-14 w-14 rounded-lg bg-primary/20 flex items-center justify-center">
-            <div className="h-9 w-9 rounded bg-primary"></div>
-          </div>
+        <div className="flex items-center gap-2">
+          <img className="h-6 w-6 rounded-md" src="/icon-192.png" alt="Logo" />
           <div className="flex flex-col">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Sistema Cashout</h1>
-            <span className="text-sm sm:text-base text-muted-foreground" data-testid="text-connection-status">
+            <h1 className="text-sm font-bold text-foreground leading-none">Sistema Cashout</h1>
+            <span className="text-[10px] text-muted-foreground" data-testid="text-connection-status">
               {connectionStatus}
             </span>
           </div>
