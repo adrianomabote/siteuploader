@@ -8,7 +8,7 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
 
   const handleAcessarPlataforma = () => {
     onClose();
-    window.open("https://media1.placard.co.mz/redirect.aspx?pid=3319&bid=1690", "_blank");
+    window.open("https://go.aff.oddsbest.co/3iaj17cv", "_blank");
   };
 
   return (

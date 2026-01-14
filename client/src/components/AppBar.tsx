@@ -6,15 +6,15 @@ interface AppBarProps {
 
 export default function AppBar({ connectionStatus, isOnline, onlineCount }: AppBarProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card px-4 py-4">
+    <header className="sticky top-0 z-50 border-b border-border bg-card px-4 py-2.5">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <img className="h-10 w-10 rounded-lg shadow-lg border border-primary/20" src="/icon-192.png" alt="Logo" />
+        <div className="flex items-center gap-2.5">
+          <img className="h-8 w-8 rounded-lg shadow-md border border-primary/20" src="/icon-192.png" alt="Logo" />
           <div className="flex flex-col">
-            <h1 className="text-lg font-black text-foreground tracking-tighter uppercase italic leading-none">Sistema Cashout</h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-primary animate-pulse' : 'bg-destructive'}`} />
-              <span className="text-xs font-bold text-muted-foreground tracking-wide uppercase">{connectionStatus}</span>
+            <h1 className="text-base font-black text-foreground tracking-tighter uppercase italic leading-none">Sistema Cashout</h1>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-primary animate-pulse' : 'bg-destructive'}`} />
+              <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase">{connectionStatus}</span>
             </div>
           </div>
         </div>
