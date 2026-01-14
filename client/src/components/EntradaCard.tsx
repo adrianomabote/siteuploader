@@ -50,9 +50,9 @@ export default function EntradaCard({
             {cashout}
           </span>
         </div>
-        <div className="flex flex-col rounded-xl bg-muted/20 p-2 border border-muted/10">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-muted/20 p-2 border border-muted/10">
           <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Tentativas</span>
-          <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-gales">
+          <span className="text-lg font-bold text-foreground tracking-tight text-center" data-testid="text-gales">
             {gales === "--" ? "--" : `${gales} vezes`}
           </span>
         </div>
