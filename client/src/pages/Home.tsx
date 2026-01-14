@@ -15,7 +15,7 @@ export default function Home() {
   const [onlineCount, setOnlineCount] = useState(0);
   
   const [placar, setPlacar] = useState("Aguarde…");
-  const [placarStatus, setPlacarStatus] = useState<"green" | "loss" | "waiting">("waiting");
+  const [placarStatus, setPlacarStatus] = useState<"ganho" | "perda" | "waiting">("waiting");
   const [aposDe, setAposDe] = useState("--");
   const [cashout, setCashout] = useState("--");
   const [gales, setGales] = useState("--");
@@ -56,7 +56,7 @@ export default function Home() {
 
           case 'sinal':
             setPlacar("ENTRAR AGORA!");
-            setPlacarStatus("green");
+            setPlacarStatus("ganho");
             setAposDe(data.apos_de.toFixed(2) + "x");
             setCashout(data.cashout.toFixed(2) + "x");
             setGales(data.max_gales.toString());
@@ -66,10 +66,10 @@ export default function Home() {
             // Atualizar placar para mostrar GREEN ou LOSS
             if (data.status === 'green') {
               setPlacar("GREEN ✓");
-              setPlacarStatus("green");
+              setPlacarStatus("ganho");
             } else {
               setPlacar("LOSS ✗");
-              setPlacarStatus("loss");
+              setPlacarStatus("perda");
             }
             
             // Só adicionar ao histórico se houver uma entrada válida
