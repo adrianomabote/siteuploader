@@ -38,17 +38,21 @@ export default function EntradaCard({
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="flex flex-col rounded-xl bg-muted/20 p-2 border border-muted/10">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-muted/20 p-2 border border-muted/10 text-center">
           <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Depois de</span>
-          <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-apos-de">
-            {aposDe}
-          </span>
+          <div className="flex items-center justify-center h-full">
+            <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-apos-de">
+              {aposDe}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col rounded-xl bg-muted/20 p-2 border border-muted/10">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-muted/20 p-2 border border-muted/10 text-center">
           <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Tirar no:</span>
-          <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-cashout">
-            {cashout}
-          </span>
+          <div className="flex items-center justify-center h-full">
+            <span className="text-lg font-bold text-foreground tracking-tight" data-testid="text-cashout">
+              {cashout}
+            </span>
+          </div>
         </div>
         <div className="flex flex-col items-center justify-center rounded-xl bg-muted/20 p-2 border border-muted/10">
           <span className="mb-0.5 text-[10px] font-medium text-muted-foreground">Tentativas</span>
