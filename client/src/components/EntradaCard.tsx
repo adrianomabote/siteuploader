@@ -25,12 +25,12 @@ export default function EntradaCard({
 
   return (
     <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-card to-card/80 p-2">
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <h2 className="text-xs font-bold text-foreground/80 uppercase tracking-tight" data-testid="text-entrada-title">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold text-foreground" data-testid="text-entrada-title">
           Sinal Confirmado
         </h2>
         <span
-          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${getPlacarClass()}`}
+          className={`rounded-full border px-3 py-1 text-sm font-bold ${getPlacarClass()}`}
           data-testid="text-placar"
         >
           {placar}
@@ -39,20 +39,20 @@ export default function EntradaCard({
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col flex-1">
-          <span className="text-[9px] uppercase tracking-tighter text-muted-foreground/70">Depois de</span>
-          <span className="text-sm font-black text-foreground" data-testid="text-apos-de">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Depois de</span>
+          <span className="text-lg font-bold text-foreground" data-testid="text-apos-de">
             {aposDe}
           </span>
         </div>
         <div className="flex flex-col flex-1 border-x border-border/30 px-2 text-center">
-          <span className="text-[9px] uppercase tracking-tighter text-muted-foreground/70">Tirar no:</span>
-          <span className="text-sm font-black text-foreground" data-testid="text-cashout">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tirar no:</span>
+          <span className="text-lg font-bold text-foreground" data-testid="text-cashout">
             {cashout}
           </span>
         </div>
         <div className="flex flex-col flex-1 text-right">
-          <span className="text-[9px] uppercase tracking-tighter text-muted-foreground/70">Tentativas</span>
-          <span className="text-sm font-black text-foreground" data-testid="text-gales">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tentativas</span>
+          <span className="text-lg font-bold text-foreground" data-testid="text-gales">
             {gales}
           </span>
         </div>
