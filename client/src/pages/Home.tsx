@@ -172,9 +172,9 @@ export default function Home() {
 
           <div className="w-full h-[800px] mt-4 rounded-md overflow-hidden border border-border/20 shadow-sm">
             <iframe 
-              src="https://go.aff.oddsbest.co/3iaj17cv" 
+              src="https://txunaplay.com/t2f909f66" 
               className="w-full h-full border-0"
-              title="OddsBest"
+              title="TxunaPlay"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
