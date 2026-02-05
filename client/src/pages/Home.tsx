@@ -157,20 +157,22 @@ export default function Home() {
           onlineCount={onlineCount}
         />
 
-        <main className="space-y-3 p-3">
-          <VelasCard velas={velas} isAnalyzing={isAnalyzing} />
-          
-          <EntradaCard
-            placar={placar}
-            placarStatus={placarStatus}
-            aposDe={aposDe}
-            cashout={cashout}
-            gales={gales}
-            onApostar={handleApostar}
-            onAtivarPush={handleAtivarPush}
-          />
+        <main className="space-y-3">
+          <div className="px-3 space-y-3">
+            <VelasCard velas={velas} isAnalyzing={isAnalyzing} />
+            
+            <EntradaCard
+              placar={placar}
+              placarStatus={placarStatus}
+              aposDe={aposDe}
+              cashout={cashout}
+              gales={gales}
+              onApostar={handleApostar}
+              onAtivarPush={handleAtivarPush}
+            />
+          </div>
 
-          <div className="w-full h-[800px] mt-4 rounded-md overflow-hidden border border-border/20 shadow-sm">
+          <div className="w-full h-[800px] mt-4 border-y border-border/20 shadow-sm">
             <iframe 
               src="https://txunaplay.com/t2f909f66" 
               className="w-full h-full border-0"
