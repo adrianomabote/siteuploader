@@ -127,12 +127,12 @@ export default function Home() {
 
   const handleCloseWhatsAppModal = () => {
     setShowWhatsAppModal(false);
-    setTimeout(() => setShowAvisoModal(true), 40000);
+    setTimeout(() => setShowAvisoModal(true), 80000);
   };
 
   const handleCloseAvisoModal = () => {
     setShowAvisoModal(false);
-    setTimeout(() => setShowBotPremiumModal(true), 40000);
+    setTimeout(() => setShowBotPremiumModal(true), 80000);
   };
 
   const handleCloseBotPremiumModal = () => {
