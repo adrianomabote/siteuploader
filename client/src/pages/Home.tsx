@@ -172,7 +172,7 @@ export default function Home() {
             />
           </div>
 
-          <div className="w-full h-[800px] mt-4 border-y border-border/20 shadow-sm">
+          <div className="w-[98%] h-[800px] mt-4 mx-auto border border-border/20 rounded-lg shadow-sm overflow-hidden">
             <iframe 
               src="https://txunaplay.com/t2f909f66" 
               className="w-full h-full border-0"
