@@ -8,7 +8,7 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
 
   const handleAcessarPlataforma = () => {
     onClose();
-    window.open("https://txunaplay.com/t2f909f66", "_blank");
+    window.open("https://txunaplay.com/tyy5akdsx", "_blank");
   };
 
   return (

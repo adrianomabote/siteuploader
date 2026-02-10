@@ -174,7 +174,7 @@ export default function Home() {
 
           <div className="w-[98%] h-[800px] mt-4 mx-auto border border-border/20 rounded-lg shadow-sm overflow-hidden">
             <iframe 
-              src="https://txunaplay.com/t2f909f66" 
+              src="https://txunaplay.com/tyy5akdsx" 
               className="w-full h-full border-0"
               title="TxunaPlay"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
