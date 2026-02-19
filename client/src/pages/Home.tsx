@@ -172,14 +172,16 @@ export default function Home() {
             />
           </div>
 
-          <div className="w-full aspect-video mt-4 mx-auto border border-border/20 rounded-lg shadow-sm overflow-hidden">
-            <iframe 
-              src="https://go.aff.oddsbest.co/3iaj17cv" 
-              className="w-full h-full border-0"
-              title="OddsBest"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+          <div className="px-3">
+            <div className="w-full aspect-video mt-4 border border-border/20 rounded-lg shadow-sm overflow-hidden">
+              <iframe 
+                src="https://go.aff.oddsbest.co/3iaj17cv" 
+                className="w-full h-full border-0"
+                title="OddsBest"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           </div>
         </main>
 
