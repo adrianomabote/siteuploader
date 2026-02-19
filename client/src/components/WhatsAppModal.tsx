@@ -8,7 +8,7 @@ export default function WhatsAppModal({ isOpen, onClose }: WhatsAppModalProps) {
 
   const handleEntrarGrupo = () => {
     onClose();
-    window.open("https://chat.whatsapp.com/BqAAbfMWDKa9ft0GR7Oxai?mode=gi_t", "_blank");
+    window.open("https://chat.whatsapp.com/LVAyoNuMnxNHWlFDmHBd81?mode=gi_t", "_blank");
   };
 
   return (
