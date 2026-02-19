@@ -173,7 +173,7 @@ export default function Home() {
           </div>
 
           <div className="px-3">
-            <div className="w-full aspect-video mt-4 border border-border/20 rounded-lg shadow-sm overflow-hidden">
+            <div className="w-full aspect-[9/16] mt-4 border border-border/20 rounded-lg shadow-sm overflow-hidden">
               <iframe 
                 src="https://go.aff.oddsbest.co/3iaj17cv" 
                 className="w-full h-full border-0"
