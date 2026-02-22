@@ -8,7 +8,7 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
 
   const handleAcessarPlataforma = () => {
     onClose();
-    window.open("https://sshortly.net/e4ec2c8", "_blank");
+    window.open("https://www.megagamelive.com/affiliates/?btag=1979879", "_blank");
   };
 
   return (
