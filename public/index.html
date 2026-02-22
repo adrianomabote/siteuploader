@@ -191,7 +191,7 @@
       <div style="padding: 0 12px;">
         <div style="width: 100%; aspect-ratio: 9/16; margin: 16px auto 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden;">
           <iframe 
-            src="https://go.aff.oddsbest.co/3iaj17cv"           style="width: 100%; height: 100%; border: none;"
+            src="https://sshortly.net/e4ec2c8"           style="width: 100%; height: 100%; border: none;"
             title="OddsBest"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
@@ -215,7 +215,7 @@
           <div style="display: flex; gap: 12px; justify-content: space-between;">
             <button onclick="closeAvisoModal()" style="flex: 1; background-color: #4b5563; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#374151'" onmouseout="this.style.backgroundColor='#4b5563'">FECHAR</button>
             
-            <button onclick="closeAvisoModal(); window.open('https://go.aff.oddsbest.co/3iaj17cv', '_blank')" style="flex: 1; background-color: #22c55e; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">CRIAR CONTA</button>
+            <button onclick="closeAvisoModal(); window.open('https://www.megagamelive.com/affiliates/?btag=1979879', '_blank')" style="flex: 1; background-color: #22c55e; color: #ffffff; border: none; border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">CRIAR CONTA</button>
           </div>
         </div>
       </div>
@@ -273,25 +273,16 @@
         function closeAvisoModal() {
           document.getElementById('avisoModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
-          modalTimer = setTimeout(function() {
-            showBotPremiumModal();
-          }, 40000);
         }
         
         function closeWhatsappModal() {
           document.getElementById('whatsappModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
-          modalTimer = setTimeout(function() {
-            showAvisoModal();
-          }, 40000);
         }
         
         function closeBotPremiumModal() {
           document.getElementById('botPremiumModal').style.display = 'none';
           if (modalTimer) clearTimeout(modalTimer);
-          modalTimer = setTimeout(function() {
-            showWhatsappModal();
-          }, 180000);
         }
         
         function showAvisoModal() {
@@ -315,9 +306,8 @@
           }
         }
         
-        setTimeout(function() {
-          showWhatsappModal();
-        }, 10000);
+        // Mostrar apenas o modal de aviso ao carregar
+        showAvisoModal();
         
         function colorirVelas() {
           const velas = document.querySelectorAll('#velas li');
