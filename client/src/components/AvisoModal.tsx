@@ -8,7 +8,7 @@ export default function AvisoModal({ isOpen, onClose }: AvisoModalProps) {
 
   const handleAcessarPlataforma = () => {
     onClose();
-    window.open("https://go.aff.oddsbest.co/3iaj17cv", "_blank");
+    window.open("https://sshortly.net/e4ec2c8", "_blank");
   };
 
   return (

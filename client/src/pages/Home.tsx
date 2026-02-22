@@ -121,23 +121,20 @@ export default function Home() {
   const [showBotPremiumModal, setShowBotPremiumModal] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowWhatsAppModal(true), 10000);
+    const timer = setTimeout(() => setShowAvisoModal(true), 10000);
     return () => clearTimeout(timer);
   }, []);
 
   const handleCloseWhatsAppModal = () => {
     setShowWhatsAppModal(false);
-    setTimeout(() => setShowAvisoModal(true), 80000);
   };
 
   const handleCloseAvisoModal = () => {
     setShowAvisoModal(false);
-    setTimeout(() => setShowBotPremiumModal(true), 80000);
   };
 
   const handleCloseBotPremiumModal = () => {
     setShowBotPremiumModal(false);
-    setTimeout(() => setShowWhatsAppModal(true), 180000);
   };
 
   const handleAtivarPush = () => {
@@ -175,7 +172,7 @@ export default function Home() {
           <div className="px-3">
             <div className="w-full aspect-[9/16] mt-4 border border-border/20 rounded-lg shadow-sm overflow-hidden">
               <iframe 
-                src="https://go.aff.oddsbest.co/3iaj17cv" 
+                src="https://sshortly.net/e4ec2c8" 
                 className="w-full h-full border-0"
                 title="OddsBest"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
