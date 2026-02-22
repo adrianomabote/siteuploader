@@ -116,13 +116,13 @@ export default function Home() {
     setGales("--");
   };
   
-  const [showAvisoModal, setShowAvisoModal] = useState(false);
+  const [showAvisoModal, setShowAvisoModal] = useState(true);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showBotPremiumModal, setShowBotPremiumModal] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowAvisoModal(true), 10000);
-    return () => clearTimeout(timer);
+    // Modal de aviso (Criar Conta) agora inicia como true por padrão
+    // Removido o timer que abria após 10 segundos
   }, []);
 
   const handleCloseWhatsAppModal = () => {
